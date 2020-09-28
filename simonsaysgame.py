@@ -8,15 +8,16 @@ from time import sleep
 # Constants
 
 MAX_LEVEL = 10
+MAX_STRIKES = 3
 NUM_IO = 20
-SOUNDS_PATH = path.dirname(path.abspath(__file__) + '/sounds/simonsays')
+SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/simonsays'
 
 # Variables
 
 io = []
-generated_sequence = []
-player_sequence = [] 
-tally = []
+generated_sequence = [None] * MAX_LEVEL
+player_sequence = [None]  * MAX_LEVEL
+tally = [None] * MAX_STRIKES
 level = 1
 score = 0
 strikes = 0
@@ -25,26 +26,27 @@ velocity = 600
 # Functions
 
 def generate_sequence():
-  for level in range(MAX_LEVEL):
-    generated_sequence[level] = randrange(NUM_IO)
+  for l in range(MAX_LEVEL):
+    generated_sequence[l] = randrange(NUM_IO)
 
 def play_sequence():
-  for level in range(level):
-    selected_led = generated_sequence[level]
+  for l in range(level):
+    selected_led = generated_sequence[l]
     io[selected_led].on()
     sleep(velocity/1000)
     io[selected_led].off()
 
 def get_player_sequence():
-  set_as_button()
+  set_as_buttons()
   level_passed = False
-  for sequence in range(level):
+  for l in range(level):
     level_passed = False
     while level_passed is False:
       for i in range(NUM_IO):
         if io[i].is_pressed:
-          player_sequence[sequence] = i
-          if generated_sequence[sequence] == player_sequence[sequence]:
+          io[i].wait_for_release()
+          player_sequence[l] = i
+          if generated_sequence[l] == player_sequence[l]:
             level_passed = True
           else:
             wrong_sequence()
@@ -55,6 +57,8 @@ def get_player_sequence():
 def right_sequence():
   global level, velocity, score
   set_as_leds()
+  sfx_correct = mixer.Sound(SOUNDS_PATH + '/right_sequence.wav')
+  sfx_correct.play()
   reset_leds()
   sleep(0.1)
   activate_leds()
@@ -65,27 +69,24 @@ def right_sequence():
     velocity -= 50
   level += 1
   score += 1
-  mixer.Sound(SOUNDS_PATH + '/right_sequence.wav')
 
 def wrong_sequence():
   global level, score, strikes, tally, velocity
   set_as_leds()
+  sfx_incorrect = mixer.Sound(SOUNDS_PATH + '/wrong_sequence.wav')
+  sfx_incorrect.play()
   for t in range(3):
     reset_leds()
     sleep(0.1)
     activate_leds()
-    sleep(0.2)
+    sleep(0.1)
   reset_leds()
   sleep(0.1)
   level = 1
   velocity = 600
   tally[strikes] = score
-  score = 0
-  for x in range(strikes):
-    score += tally[score]
-  score = ceil(score / strikes)
   strikes += 1
-  mixer.Sound(SOUNDS_PATH + '/wrong_sequence.wav')
+  score = 0
 
 def activate_leds():
   for led in io:
@@ -95,7 +96,7 @@ def reset_leds():
   for led in io:
     led.off()
 
-def set_as_button():
+def set_as_buttons():
   global io
   io.clear()
   for i in range(NUM_IO):
@@ -107,20 +108,19 @@ def set_as_leds():
   for o in range(NUM_IO):
     io.append(LED(o+1))
 
-def clean_up():
-  global io
-  for x in io:
-    x.close()
-
 # Main
 
 def init():
   mixer.init()
   set_as_leds()
   reset_leds()
+  sleep(2)
+  
+def start():
   start_button = Button(NUM_IO + 1)
   start_button.wait_for_press()
-  mixer.Sound(SOUNDS_PATH + '/instructions.wav')
+  dialog_instructions = mixer.Sound(SOUNDS_PATH + '/instructions.wav')
+  dialog_instructions.play()
   sleep(30)
 
 def loop():
@@ -130,25 +130,39 @@ def loop():
   get_player_sequence()
 
 def complete():
+  global score
   activate_leds()
-  if strikes < 3: 
-    mixer.Sound(SOUNDS_PATH + '/on_success.wav')
+  if strikes < MAX_STRIKES:
+    score = score - strikes  
+    dialog_success = mixer.Sound(SOUNDS_PATH + '/on_success.wav')
+    dialog_success.play()
   else:
-    mixer.Sound(SOUNDS_PATH + '/on_failure.wav')
+    for x in tally:
+      score += x
+    score = ceil(score / strikes)
+    dialog_failure = mixer.Sound(SOUNDS_PATH + '/on_failure.wav')
+    dialog_failure.play()
+  print('Result: [ Score: {}, Strikes {} ]'.format(score, strikes))
   sleep(10)
+
+def clean_up():
+  global io
+  for x in io:
+    x.close()
+  mixer.quit()
 
 if __name__ == '__main__':
   try:
     print('Initializing ...')
     init()
-    print('SimonSays game is now active!')
-    while level <= MAX_LEVEL and strikes < 3:
+    print('SimonSays game is now active! Press the start button to play ...')
+    start()
+    while level <= MAX_LEVEL and strikes < MAX_STRIKES:
       print('Score: {}, Strikes: {}'.format(score, strikes))
       loop()
     print('SimonSays game completed!')
     complete()
   except KeyboardInterrupt:
-    print('Keyboard interupt detected! Closing ...')
+    print('Keyboard interrupt detected! Closing ...')
   finally:
-    mixer.quit()
     clean_up()
