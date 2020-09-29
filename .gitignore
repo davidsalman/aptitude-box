@@ -1,2 +1,5 @@
 # Virtual Environments
 .env/
+
+# Google Service Account
+configs/aptitude-cloud-firebase-adminsdk-pv06k-64624c438a.json

@@ -1,3 +1,4 @@
+import firebase
 from gpiozero import Button, LED
 from math import ceil
 from os import path
@@ -7,6 +8,9 @@ from time import sleep
 
 # Constants
 
+GAME_DB = 'games'
+GAME_ID = 'proto-box-simon-says'
+GAME_NAME = 'Simon Says Game'
 MAX_LEVEL = 10
 MAX_STRIKES = 3
 NUM_IO = 20
@@ -26,6 +30,7 @@ velocity = 600
 # Functions
 
 def generate_sequence():
+  global generated_sequence
   for l in range(MAX_LEVEL):
     generated_sequence[l] = randrange(NUM_IO)
 
@@ -108,19 +113,57 @@ def set_as_leds():
   for o in range(NUM_IO):
     io.append(LED(o+1))
 
+def reset():
+  global generated_sequence, player_sequence, tally, level, score, strikes, velocity
+  generated_sequence = [None] * MAX_LEVEL
+  player_sequence = [None]  * MAX_LEVEL
+  tally = [None] * MAX_STRIKES
+  level = 1
+  score = 0
+  strikes = 0
+  velocity = 600
+
 # Main
 
 def init():
   mixer.init()
   set_as_leds()
   reset_leds()
+  game_ref = firebase.db.reference(GAME_DB).child(GAME_ID)
+  if game_ref.get() == None:
+    game_ref.set({
+      'name': GAME_NAME,
+      'alive': True,
+      'status': 'Initializing',
+      "score": score,
+      "max_score": MAX_LEVEL,
+      "strikes": strikes,
+      "max_strikes": MAX_STRIKES
+    })
+  else:
+    game_ref.update({
+      'alive': True,
+      'status': 'Initailizing',
+      "score": score,
+      "strikes": strikes
+    })
   sleep(2)
   
 def start():
+  reset()
+  game_ref = firebase.db.reference(GAME_DB).child(GAME_ID)
+  game_ref.update({
+    'status': 'Ready',
+    'score': score,
+    'strikes': strikes
+  })
   start_button = Button(NUM_IO + 1)
   start_button.wait_for_press()
   dialog_instructions = mixer.Sound(SOUNDS_PATH + '/instructions.wav')
   dialog_instructions.play()
+  game_ref.update({
+    'status': 'Playing'
+  })
   sleep(30)
 
 def loop():
@@ -128,6 +171,11 @@ def loop():
     generate_sequence()
   play_sequence()
   get_player_sequence()
+  game_ref = firebase.db.reference(GAME_DB).child(GAME_ID)
+  game_ref.update({
+    'score': score,
+    'strikes': strikes
+  })
 
 def complete():
   global score
@@ -143,10 +191,21 @@ def complete():
     dialog_failure = mixer.Sound(SOUNDS_PATH + '/on_failure.wav')
     dialog_failure.play()
   print('Result: [ Score: {}, Strikes {} ]'.format(score, strikes))
+  game_ref = firebase.db.reference(GAME_DB).child(GAME_ID)
+  game_ref.update({
+    'status': 'Finished',
+    'score': score,
+    'strikes': strikes
+  })
   sleep(10)
 
 def clean_up():
   global io
+  game_ref = firebase.db.reference('games').child(GAME_ID)
+  game_ref.update({
+    'alive': False,
+    'status': 'Inactive'
+  })
   for x in io:
     x.close()
   mixer.quit()
@@ -155,13 +214,15 @@ if __name__ == '__main__':
   try:
     print('Initializing ...')
     init()
-    print('SimonSays game is now active! Press the start button to play ...')
-    start()
-    while level <= MAX_LEVEL and strikes < MAX_STRIKES:
-      print('Score: {}, Strikes: {}'.format(score, strikes))
-      loop()
-    print('SimonSays game completed!')
-    complete()
+    print('SimonSays game is now active!') 
+    while True:
+      print('Press the start button to play ...')
+      start()
+      while level <= MAX_LEVEL and strikes < MAX_STRIKES:
+        print('Score: {}, Strikes: {}'.format(score, strikes))
+        loop()
+      print('SimonSays game completed!')
+      complete()
   except KeyboardInterrupt:
     print('Keyboard interrupt detected! Closing ...')
   finally:
