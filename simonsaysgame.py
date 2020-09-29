@@ -5,6 +5,7 @@ from os import path
 from pygame import mixer
 from random import randrange
 from time import sleep
+from datetime import datetime
 
 # Constants
 
@@ -138,14 +139,18 @@ def init():
       "score": score,
       "max_score": MAX_LEVEL,
       "strikes": strikes,
-      "max_strikes": MAX_STRIKES
+      "max_strikes": MAX_STRIKES,
+      "started_at": 0,
+      "completed_at": 0
     })
   else:
     game_ref.update({
       'alive': True,
       'status': 'Initailizing',
       "score": score,
-      "strikes": strikes
+      "strikes": strikes,
+      "started_at": 0,
+      "completed_at": 0
     })
   sleep(2)
   
@@ -155,14 +160,17 @@ def start():
   game_ref.update({
     'status': 'Ready',
     'score': score,
-    'strikes': strikes
+    'strikes': strikes,
+    "started_at": 0,
+    "completed_at": 0
   })
   start_button = Button(NUM_IO + 1)
   start_button.wait_for_press()
   dialog_instructions = mixer.Sound(SOUNDS_PATH + '/instructions.wav')
   dialog_instructions.play()
   game_ref.update({
-    'status': 'Playing'
+    'status': 'Playing',
+    'started_at': datetime.now()
   })
   sleep(30)
 
@@ -191,9 +199,23 @@ def complete():
     dialog_failure = mixer.Sound(SOUNDS_PATH + '/on_failure.wav')
     dialog_failure.play()
   print('Result: [ Score: {}, Strikes {} ]'.format(score, strikes))
+  end_time = datetime.now()
   game_ref = firebase.db.reference(GAME_DB).child(GAME_ID)
   game_ref.update({
     'status': 'Finished',
+    'score': score,
+    'strikes': strikes
+  })
+  game_snapshot = game_ref.get()
+  start_time = 0
+  for key, val in game_snapshot.items():
+    if key == 'started_at':
+      start_time = val
+  firebase.store.collection("results").add({
+    'box_reference': firebase.BOX_ID,
+    'game_reference': GAME_ID,
+    "started_at": start_time,
+    'completed_at': end_time,
     'score': score,
     'strikes': strikes
   })
@@ -204,7 +226,9 @@ def clean_up():
   game_ref = firebase.db.reference('games').child(GAME_ID)
   game_ref.update({
     'alive': False,
-    'status': 'Inactive'
+    'status': 'Inactive',
+    'started_at': 0,
+    "completed_at": 0
   })
   for x in io:
     x.close()
