@@ -1,11 +1,11 @@
-import firebase
+from datetime import datetime
+from firebase import db, store
 from gpiozero import Button, LED
 from math import ceil
 from os import path
 from pygame import mixer
 from random import randrange
 from time import sleep
-from datetime import datetime
 
 # Constants
 
@@ -15,10 +15,12 @@ GAME_NAME = 'Simon Says Game'
 MAX_LEVEL = 10
 MAX_STRIKES = 3
 NUM_IO = 20
-SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/simonsays'
+PINS = [1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/simon_says'
+START_PIN = 23
+
 
 # Variables
-
 io = []
 generated_sequence = [None] * MAX_LEVEL
 player_sequence = [None]  * MAX_LEVEL
@@ -94,6 +96,16 @@ def wrong_sequence():
   strikes += 1
   score = 0
 
+def reset():
+  global generated_sequence, player_sequence, tally, level, score, strikes, velocity
+  generated_sequence = [None] * MAX_LEVEL
+  player_sequence = [None]  * MAX_LEVEL
+  tally = [None] * MAX_STRIKES
+  level = 1
+  score = 0
+  strikes = 0
+  velocity = 600
+
 def activate_leds():
   for led in io:
     led.on()
@@ -106,23 +118,13 @@ def set_as_buttons():
   global io
   io.clear()
   for i in range(NUM_IO):
-    io.append(Button(i+1))
+    io.append(Button(PINS[i]))
 
 def set_as_leds():
   global io
   io.clear()
   for o in range(NUM_IO):
-    io.append(LED(o+1))
-
-def reset():
-  global generated_sequence, player_sequence, tally, level, score, strikes, velocity
-  generated_sequence = [None] * MAX_LEVEL
-  player_sequence = [None]  * MAX_LEVEL
-  tally = [None] * MAX_STRIKES
-  level = 1
-  score = 0
-  strikes = 0
-  velocity = 600
+    io.append(LED(PINS[o]))
 
 # Main
 
@@ -130,47 +132,47 @@ def init():
   mixer.init()
   set_as_leds()
   reset_leds()
-  game_ref = firebase.db.reference(GAME_DB).child(GAME_ID)
+  game_ref = db.reference(GAME_DB).child(GAME_ID)
   if game_ref.get() == None:
     game_ref.set({
       'name': GAME_NAME,
       'alive': True,
       'status': 'Initializing',
-      "score": score,
-      "max_score": MAX_LEVEL,
-      "strikes": strikes,
-      "max_strikes": MAX_STRIKES,
-      "started_at": 0,
-      "completed_at": 0
+      'score': score,
+      'max_score': MAX_LEVEL,
+      'strikes': strikes,
+      'max_strikes': MAX_STRIKES,
+      'started_at': 0,
+      'completed_at': 0
     })
   else:
     game_ref.update({
       'alive': True,
       'status': 'Initailizing',
-      "score": score,
-      "strikes": strikes,
-      "started_at": 0,
-      "completed_at": 0
+      'score': score,
+      'strikes': strikes,
+      'started_at': 0,
+      'completed_at': 0
     })
   sleep(2)
   
 def start():
   reset()
-  game_ref = firebase.db.reference(GAME_DB).child(GAME_ID)
+  game_ref = db.reference(GAME_DB).child(GAME_ID)
   game_ref.update({
     'status': 'Ready',
     'score': score,
     'strikes': strikes,
-    "started_at": 0,
-    "completed_at": 0
+    'started_at': 0,
+    'completed_at': 0
   })
-  start_button = Button(NUM_IO + 1)
+  start_button = Button(START_PIN)
   start_button.wait_for_press()
   dialog_instructions = mixer.Sound(SOUNDS_PATH + '/instructions.wav')
   dialog_instructions.play()
   game_ref.update({
     'status': 'Playing',
-    'started_at': datetime.now()
+    'started_at': datetime.utcnow().timestamp()
   })
   sleep(30)
 
@@ -179,7 +181,7 @@ def loop():
     generate_sequence()
   play_sequence()
   get_player_sequence()
-  game_ref = firebase.db.reference(GAME_DB).child(GAME_ID)
+  game_ref = db.reference(GAME_DB).child(GAME_ID)
   game_ref.update({
     'score': score,
     'strikes': strikes
@@ -199,22 +201,22 @@ def complete():
     dialog_failure = mixer.Sound(SOUNDS_PATH + '/on_failure.wav')
     dialog_failure.play()
   print('Result: [ Score: {}, Strikes {} ]'.format(score, strikes))
-  end_time = datetime.now()
-  game_ref = firebase.db.reference(GAME_DB).child(GAME_ID)
+  end_time = datetime.utcnow().timestamp()
+  game_ref = db.reference(GAME_DB).child(GAME_ID)
   game_ref.update({
     'status': 'Finished',
     'score': score,
-    'strikes': strikes
+    'strikes': strikes,
+    'completed_at': end_time
   })
   game_snapshot = game_ref.get()
   start_time = 0
   for key, val in game_snapshot.items():
     if key == 'started_at':
       start_time = val
-  firebase.store.collection("results").add({
-    'box_reference': firebase.BOX_ID,
+  store.collection('results').add({
     'game_reference': GAME_ID,
-    "started_at": start_time,
+    'started_at': start_time,
     'completed_at': end_time,
     'score': score,
     'strikes': strikes
@@ -223,12 +225,12 @@ def complete():
 
 def clean_up():
   global io
-  game_ref = firebase.db.reference('games').child(GAME_ID)
+  game_ref = db.reference().child(GAME_ID)
   game_ref.update({
     'alive': False,
     'status': 'Inactive',
     'started_at': 0,
-    "completed_at": 0
+    'completed_at': 0
   })
   for x in io:
     x.close()
