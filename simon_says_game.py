@@ -13,14 +13,15 @@ GAME_DB = 'games'
 GAME_ID = 'proto-box-simon-says'
 GAME_NAME = 'Simon Says Game'
 MAX_LEVEL = 10
+MAX_SCORE = MAX_LEVEL
 MAX_STRIKES = 3
 NUM_IO = 20
 PINS = [1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/simon_says'
 START_PIN = 23
 
-
 # Variables
+
 io = []
 generated_sequence = [None] * MAX_LEVEL
 player_sequence = [None]  * MAX_LEVEL
@@ -96,7 +97,7 @@ def wrong_sequence():
   strikes += 1
   score = 0
 
-def reset():
+def reset_game():
   global generated_sequence, player_sequence, tally, level, score, strikes, velocity
   generated_sequence = [None] * MAX_LEVEL
   player_sequence = [None]  * MAX_LEVEL
@@ -105,6 +106,8 @@ def reset():
   score = 0
   strikes = 0
   velocity = 600
+  set_as_leds()
+  reset_leds()
 
 def activate_leds():
   for led in io:
@@ -116,22 +119,24 @@ def reset_leds():
 
 def set_as_buttons():
   global io
-  io.clear()
+  reset_io()
   for i in range(NUM_IO):
     io.append(Button(PINS[i]))
 
 def set_as_leds():
   global io
-  io.clear()
+  reset_io()
   for o in range(NUM_IO):
     io.append(LED(PINS[o]))
+
+def reset_io():
+  for x in io:
+    x.close()
 
 # Main
 
 def init():
   mixer.init()
-  set_as_leds()
-  reset_leds()
   game_ref = db.reference(GAME_DB).child(GAME_ID)
   if game_ref.get() == None:
     game_ref.set({
@@ -139,7 +144,7 @@ def init():
       'alive': True,
       'status': 'Initializing',
       'score': score,
-      'max_score': MAX_LEVEL,
+      'max_score': MAX_SCORE,
       'strikes': strikes,
       'max_strikes': MAX_STRIKES,
       'started_at': 0,
@@ -157,7 +162,7 @@ def init():
   sleep(2)
   
 def start():
-  reset()
+  reset_game()
   game_ref = db.reference(GAME_DB).child(GAME_ID)
   game_ref.update({
     'status': 'Ready',
@@ -191,7 +196,7 @@ def complete():
   global score
   activate_leds()
   if strikes < MAX_STRIKES:
-    score = score - strikes  
+    score -= strikes  
     dialog_success = mixer.Sound(SOUNDS_PATH + '/on_success.wav')
     dialog_success.play()
   else:
@@ -224,16 +229,14 @@ def complete():
   sleep(10)
 
 def clean_up():
-  global io
-  game_ref = db.reference().child(GAME_ID)
+  game_ref = db.reference(GAME_DB).child(GAME_ID)
   game_ref.update({
     'alive': False,
     'status': 'Inactive',
     'started_at': 0,
     'completed_at': 0
   })
-  for x in io:
-    x.close()
+  reset_io()
   mixer.quit()
 
 if __name__ == '__main__':
