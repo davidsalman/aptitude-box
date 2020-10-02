@@ -70,6 +70,10 @@ def show_target_state(switch_state, target):
     switch_state[2].blink(0.25, 0.25, 2, True)
   sleep(1)
 
+def activate_switch_leds(led_switches):
+  for led in led_switches:
+    led.on()
+
 def right_state():
   global score
   score += 1
@@ -77,10 +81,6 @@ def right_state():
 def wrong_state():
   global strikes
   strikes += 1  
-
-def activate_switch_leds(led_switches):
-  for led in led_switches:
-    led.on()
 
 def activate_leds():
   for x in io:
@@ -112,16 +112,6 @@ def reset_io():
   for i in io:
     for o in io[i]:
       o.close()
-
-def reset_game():
-  global level, score, strikes, states, targets
-  states = [None] * MAX_STATES
-  targets = [None] * MAX_STATES
-  level = 1
-  score = 0
-  strikes = 0
-  set_as_leds()
-  reset_leds()
 
 # Main
 
@@ -179,17 +169,54 @@ def loop():
   while states[0] != targets[0] or states[1] != targets[1] or states[2] != targets[2] or states[3] != targets[3] or states[4] != targets[4]:
     for s in range(MAX_STATES):
       read_switch(io[s], s)
+      set_as_leds()
+      reset_leds()
       if states[s] == targets[s]:
         activate_switch_leds(io[s])
+        right_state()
       else:
         show_current_state(io[s], states[s])
         show_target_state(io[s], targets[s])
-        
+  level += 1
+  game_ref = db.reference(GAME_DB).child(GAME_ID)
+  game_ref.update({
+    'score': score,
+    'strikes': strikes
+  })
+
 def complete():
   global score
   activate_leds()
+  score -= strikes
   if strikes < MAX_STRIKES:
-    score -= strikes
+    dialog_success = mixer.Sound(SOUNDS_PATH + '/on_success.wav')
+    dialog_success.play()
+  else:
+    dialog_failure = mixer.Sound(SOUNDS_PATH + '/on_failure.wav')
+    dialog_failure.play()
+  print('Result: [ Score: {}, Strikes {} ]'.format(score, strikes))
+  end_time = datetime.utcnow().timestamp()
+  game_ref = db.reference(GAME_DB).child(GAME_ID)
+  game_ref.update({
+    'status': 'Finished',
+    'score': score,
+    'strikes': strikes,
+    'completed_at': end_time
+  })
+  game_snapshot = game_ref.get()
+  start_time = 0
+  for key, val in game_snapshot.items():
+    if key == 'started_at':
+      start_time = val
+  store.collection('results').add({
+    'game_reference': GAME_ID,
+    'started_at': start_time,
+    'completed_at': end_time,
+    'score': score,
+    'strikes': strikes
+  })
+  sleep(10)
+
 
 def clean_up():
   game_ref = db.reference(GAME_DB).child(GAME_ID)
