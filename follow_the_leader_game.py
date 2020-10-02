@@ -17,6 +17,7 @@ NUM_IO = 20
 PINS = [4, 17, 27, 22, 10, 9, 11, 0, 5, 6, 13, 19, 26, 21, 20, 16, 12, 1, 7, 8]
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/follow_the_leader'
 START_PIN = 23
+START_LED = 14
 
 # Variables
 
@@ -32,7 +33,6 @@ strikes = 0
 
 def check_both_hands_sequence():
   global io
-  set_as_buttons()
   sequence_left = left_hand_sequence[level-1] - 1
   sequence_right = right_hand_sequence[level-1] - 1
   pin_left = io[sequence_left].pin.number
@@ -77,7 +77,6 @@ def check_both_hands_sequence():
 
 def check_left_hand_sequence():
   global io
-  set_as_buttons()
   sequence = left_hand_sequence[level-1] - 1
   pin = io[sequence].pin.number
   state = io[sequence].value
@@ -87,9 +86,9 @@ def check_left_hand_sequence():
   else:
     target = 0
   while state != target:
-    for i in range(NUM_IO):
-      if (io[i].value == target and i > sequence) or (io[i].value == state and i < sequence):
-        wrong_sequence()
+    # for i in range(NUM_IO):
+    #   if (io[i].value == target and i > sequence) or (io[i].value == state and i < sequence):
+    #     wrong_sequence()
     io[sequence].close()
     io[sequence] = LED(pin)
     io[sequence].blink(0.5, 0.5, 1, False)
@@ -104,7 +103,6 @@ def check_left_hand_sequence():
 
 def check_right_hand_sequence():
   global io
-  set_as_buttons()
   sequence = right_hand_sequence[level-1] - 1
   pin = io[sequence].pin.number
   state = io[sequence].value
@@ -114,9 +112,9 @@ def check_right_hand_sequence():
   else:
     target = 0
   while state != target:
-    for i in range(NUM_IO):
-      if (io[i].value == target and i > sequence) or (io[i].value == state and i < sequence):
-        wrong_sequence()
+    # for i in range(NUM_IO):
+    #   if (io[i].value == target and i > sequence) or (io[i].value == state and i < sequence):
+    #     wrong_sequence()
     io[sequence].close()
     io[sequence] = LED(pin)
     io[sequence].blink(0.5, 0.5, 1, False)
@@ -164,13 +162,13 @@ def reset_leds():
 
 def set_as_buttons():
   global io
-  reset_io()
+  io.clear()
   for i in range(NUM_IO):
     io.append(Button(PINS[i]))
 
 def set_as_leds():
   global io
-  reset_io()
+  io.clear()
   for o in range(NUM_IO):
     io.append(LED(PINS[o]))
 
@@ -227,7 +225,7 @@ def start():
   sleep(30)
 
 def loop():
-  global mode, left_hand_sequence, right_hand_sequence
+  global level, mode, left_hand_sequence, right_hand_sequence
   if mode == 'both':
     check_both_hands_sequence()
   elif mode == "left":

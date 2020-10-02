@@ -20,6 +20,7 @@ PINS = [1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/simon_says'
 START_PIN = 23
 
+
 # Variables
 
 io = []
@@ -119,13 +120,13 @@ def reset_leds():
 
 def set_as_buttons():
   global io
-  reset_io()
+  io.clear()
   for i in range(NUM_IO):
     io.append(Button(PINS[i]))
 
 def set_as_leds():
   global io
-  reset_io()
+  io.clear()
   for o in range(NUM_IO):
     io.append(LED(PINS[o]))
 
@@ -243,14 +244,14 @@ if __name__ == '__main__':
   try:
     print('Initializing ...')
     init()
-    print('SimonSays game is now active!') 
+    print('Simon Says Game is now active!') 
     while True:
       print('Press the start button to play ...')
       start()
       while level <= MAX_LEVEL and strikes < MAX_STRIKES:
         print('Score: {}, Strikes: {}'.format(score, strikes))
         loop()
-      print('SimonSays game completed!')
+      print('Simon Says Game completed!')
       complete()
   except KeyboardInterrupt:
     print('Keyboard interrupt detected! Closing ...')
