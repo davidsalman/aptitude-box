@@ -26,7 +26,6 @@ START_PIN = 23
 io = []
 states = [None] * MAX_STATES
 targets = [None] * MAX_STATES
-mistake = [None] * MAX_STATES
 level = 1
 score = 0
 strikes = 0
@@ -81,6 +80,14 @@ def right_state():
 def wrong_state():
   global strikes
   strikes += 1  
+
+def reset_game():
+  global states, targets, level, score, states
+  states = [None] * MAX_STATES
+  targets = [None] * MAX_STATES
+  level = 1
+  score = 0
+  strikes = 0
 
 def activate_leds():
   for x in io:
@@ -216,7 +223,6 @@ def complete():
     'strikes': strikes
   })
   sleep(10)
-
 
 def clean_up():
   game_ref = db.reference(GAME_DB).child(GAME_ID)
