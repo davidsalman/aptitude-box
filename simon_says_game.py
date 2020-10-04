@@ -173,6 +173,8 @@ def start():
     'started_at': 0,
     'completed_at': 0
   })
+  dialog_start = mixer.Sound(SOUNDS_PATH + '/dialog/start.wav')
+  dialog_start.play()
   start_button = Button(START_PIN)
   start_button.wait_for_press()
   dialog_instructions = mixer.Sound(SOUNDS_PATH + '/dialog/instructions.wav')
