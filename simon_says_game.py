@@ -67,7 +67,7 @@ def get_player_sequence():
 def right_sequence():
   global level, velocity, score
   set_as_leds()
-  sfx_correct = mixer.Sound(SOUNDS_PATH + '/right_sequence.wav')
+  sfx_correct = mixer.Sound(SOUNDS_PATH + '/sfx/right_sequence.wav')
   sfx_correct.play()
   reset_leds()
   sleep(0.1)
@@ -83,7 +83,7 @@ def right_sequence():
 def wrong_sequence():
   global level, score, strikes, tally, velocity
   set_as_leds()
-  sfx_incorrect = mixer.Sound(SOUNDS_PATH + '/wrong_sequence.wav')
+  sfx_incorrect = mixer.Sound(SOUNDS_PATH + '/sfx/wrong_sequence.wav')
   sfx_incorrect.play()
   for t in range(3):
     reset_leds()
@@ -174,7 +174,7 @@ def start():
   })
   start_button = Button(START_PIN)
   start_button.wait_for_press()
-  dialog_instructions = mixer.Sound(SOUNDS_PATH + '/instructions.wav')
+  dialog_instructions = mixer.Sound(SOUNDS_PATH + '/dialog/instructions.wav')
   dialog_instructions.play()
   game_ref.update({
     'status': 'Playing',
@@ -198,13 +198,13 @@ def complete():
   activate_leds()
   if strikes < MAX_STRIKES:
     score -= strikes  
-    dialog_success = mixer.Sound(SOUNDS_PATH + '/on_success.wav')
+    dialog_success = mixer.Sound(SOUNDS_PATH + '/dialog/on_success.wav')
     dialog_success.play()
   else:
     for x in tally:
       score += x
     score = ceil(score / strikes)
-    dialog_failure = mixer.Sound(SOUNDS_PATH + '/on_failure.wav')
+    dialog_failure = mixer.Sound(SOUNDS_PATH + '/dialog/on_failure.wav')
     dialog_failure.play()
   print('Result: [ Score: {}, Strikes {} ]'.format(score, strikes))
   end_time = datetime.utcnow().timestamp()

@@ -82,21 +82,24 @@ def wrong_state():
   strikes += 1  
 
 def reset_game():
-  global states, targets, level, score, states
+  global states, targets, level, score, strikes
   states = [None] * MAX_STATES
   targets = [None] * MAX_STATES
   level = 1
   score = 0
   strikes = 0
+  set_as_leds()
+  reset_leds()
+  set_as_buttons()
 
 def activate_leds():
-  for x in io:
-    for y in io[x]:
-      y.on()
+  for i in io:
+    for o in i:
+      o.on()
 
 def reset_leds():
   for i in io:
-    for o in io[i]:
+    for o in i:
       o.off()
 
 def set_as_leds():
@@ -105,19 +108,19 @@ def set_as_leds():
   for o in range(MAX_STATES):
     io.append([])
     for j in range(3):
-      io[o].append(Button[PINS[o][j]])
+      io[o][j].append(LED(PINS[o][j]))
 
 def set_as_buttons():
   global io
   io.clear()
   for i in range(MAX_STATES):
     io.append([])
-    for j in range(2):
-      io[i].append(Button[PINS[i][j]])
+    for j in range(3):
+      io[i][j].append(Button(PINS[i][j]))
     
 def reset_io():
   for i in io:
-    for o in io[i]:
+    for o in i:
       o.close()
 
 # Main
