@@ -20,7 +20,6 @@ PINS = [1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/simon_says'
 START_PIN = 23
 
-
 # Variables
 
 io = []
@@ -67,14 +66,14 @@ def get_player_sequence():
 def right_sequence():
   global level, velocity, score
   set_as_leds()
-  sfx_correct = mixer.Sound(SOUNDS_PATH + '/sfx/right_sequence.wav')
-  sfx_correct.play()
   reset_leds()
   sleep(0.1)
   activate_leds()
   sleep(0.5)
   reset_leds()
   sleep(0.1)
+  sfx_correct = mixer.Sound(SOUNDS_PATH + '/sfx/right_sequence.wav')
+  sfx_correct.play()
   if velocity > 100:
     velocity -= 50
   level += 1
@@ -83,8 +82,6 @@ def right_sequence():
 def wrong_sequence():
   global level, score, strikes, tally, velocity
   set_as_leds()
-  sfx_incorrect = mixer.Sound(SOUNDS_PATH + '/sfx/wrong_sequence.wav')
-  sfx_incorrect.play()
   for t in range(3):
     reset_leds()
     sleep(0.1)
@@ -92,6 +89,10 @@ def wrong_sequence():
     sleep(0.1)
   reset_leds()
   sleep(0.1)
+  sfx_incorrect = mixer.Sound(SOUNDS_PATH + '/sfx/wrong_sequence.wav')
+  sfx_incorrect.play()
+  dialog_incorrect = mixer.Sound(SOUNDS_PATH + '/dialog/incorrect.wav')
+  dialog_incorrect.play()
   level = 1
   velocity = 600
   tally[strikes] = score
@@ -227,7 +228,7 @@ def complete():
     'score': score,
     'strikes': strikes
   })
-  sleep(10)
+  sleep(5)
 
 def clean_up():
   game_ref = db.reference(GAME_DB).child(GAME_ID)
