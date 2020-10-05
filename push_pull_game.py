@@ -136,7 +136,7 @@ def set_as_buttons():
     for j in range(3):
       if io[i][j] is not None:
         io[i][j].close()
-      io[i][j] = LED(PINS[o][j])
+      io[i][j] = LED(PINS[i][j])
     
 def reset_io():
   for i in io:
