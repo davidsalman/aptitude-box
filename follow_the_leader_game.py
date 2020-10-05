@@ -141,7 +141,7 @@ def right_sequence():
   score += 1
 
 def wrong_sequence():
-  global score, strikes
+  global strikes
   sfx_incorrect = mixer.Sound(SOUNDS_PATH + '/sfx/boop.wav')
   sfx_incorrect.play()
   dialog_wrong = mixer.Sound(SOUNDS_PATH + '/dialog/wrong.wav')

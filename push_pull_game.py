@@ -17,13 +17,15 @@ MAX_STATES = 5
 MAX_SCORE = MAX_LEVEL * MAX_STATES
 MAX_STRIKES = 3
 NUM_IO = 15
-PINS = [[4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15], [16, 17, 18]]
+PINS = [[4, 17, 27], [22, 10, 9], [11, 0, 5], [6, 13, 19], [14, 15, 18]]
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/push_pull'
-START_PIN = 23
+START_PIN = 26
+START_LED = 40
 
 # Variables
 
-io = []
+io = [[None, None, None], [None, None, None], [None, None, None], [None, None, None], [None, None, None]]
+origin = [None] * MAX_STATES
 states = [None] * MAX_STATES
 targets = [None] * MAX_STATES
 level = 1
@@ -39,6 +41,17 @@ def generate_targets(target_index):
       targets[target_index] = 0
     else:
       targets[target_index] = 2
+
+def read_origin(switch_state, switch_index):
+  set_as_buttons()
+  state = None
+  if switch_state[0].value == 1 and switch_state[1].value == 1:
+    state = 2
+  elif switch_state[0].value == 0 and switch_state[1].value == 1:
+    state = 1
+  elif switch_state[0].value == 0 and switch_state[1].value == 0:
+    state = 0 
+  origin[switch_index] = state
 
 def read_switch(switch_state, switch_index):
   set_as_buttons()
@@ -75,14 +88,21 @@ def activate_switch_leds(led_switches):
 
 def right_state():
   global score
+  sfx_success = mixer.Sound(SOUNDS_PATH + '/sfx/success.wav')
+  sfx_success.play()
   score += 1
 
 def wrong_state():
   global strikes
+  sfx_failure = mixer.Sound(SOUNDS_PATH + '/sfx/failure.wav')
+  sfx_failure.play()
+  dialog_wrong = mixer.Sound(SOUNDS_PATH + '/dialog/wrong.wav')
+  dialog_wrong.play()
   strikes += 1  
 
 def reset_game():
-  global states, targets, level, score, strikes
+  global io, states, targets, level, score, strikes
+  io = [[None, None, None], [None, None, None], [None, None, None], [None, None, None], [None, None, None]]
   states = [None] * MAX_STATES
   targets = [None] * MAX_STATES
   level = 1
@@ -104,19 +124,19 @@ def reset_leds():
 
 def set_as_leds():
   global io
-  io.clear()
   for o in range(MAX_STATES):
-    io.append([])
     for j in range(3):
-      io[o][j].append(LED(PINS[o][j]))
+      if io[o][j] is not None:
+        io[o][j].close()
+      io[o][j] = LED(PINS[o][j])
 
 def set_as_buttons():
   global io
-  io.clear()
   for i in range(MAX_STATES):
-    io.append([])
     for j in range(3):
-      io[i][j].append(Button(PINS[i][j]))
+      if io[i][j] is not None:
+        io[i][j].close()
+      io[i][j] = LED(PINS[o][j])
     
 def reset_io():
   for i in io:
@@ -161,9 +181,14 @@ def start():
     'started_at': 0,
     'completed_at': 0
   })
+  dialog_start = mixer.Sound(SOUNDS_PATH + '/dialog/start.wav')
+  dialog_start.play()
+  start_led = LED(START_LED)
+  start_led.blink(0.5, 0.5, None, True)
   start_button = Button(START_PIN)
   start_button.wait_for_press()
-  dialog_instructions = mixer.Sound(SOUNDS_PATH + '/instructions.wav')
+  start_led.close()
+  dialog_instructions = mixer.Sound(SOUNDS_PATH + '/dialog/instructions.wav')
   dialog_instructions.play()
   game_ref.update({
     'status': 'Playing',
@@ -172,8 +197,10 @@ def start():
   sleep(30)
 
 def loop():
+  global level
   for s in range(MAX_STATES):
     read_switch(io[s], s)
+    read_origin(io[s], s)
   for t in range(MAX_STATES):
     generate_targets(t)
   while states[0] != targets[0] or states[1] != targets[1] or states[2] != targets[2] or states[3] != targets[3] or states[4] != targets[4]:
@@ -185,6 +212,8 @@ def loop():
         activate_switch_leds(io[s])
         right_state()
       else:
+        if states[s] != origin[s] or states[s] != targets[s]:
+          wrong_state()
         show_current_state(io[s], states[s])
         show_target_state(io[s], targets[s])
   level += 1
@@ -199,10 +228,10 @@ def complete():
   activate_leds()
   score -= strikes
   if strikes < MAX_STRIKES:
-    dialog_success = mixer.Sound(SOUNDS_PATH + '/on_success.wav')
+    dialog_success = mixer.Sound(SOUNDS_PATH + '/dialog/on_success.wav')
     dialog_success.play()
   else:
-    dialog_failure = mixer.Sound(SOUNDS_PATH + '/on_failure.wav')
+    dialog_failure = mixer.Sound(SOUNDS_PATH + '/dialog/on_failure.wav')
     dialog_failure.play()
   print('Result: [ Score: {}, Strikes {} ]'.format(score, strikes))
   end_time = datetime.utcnow().timestamp()
@@ -223,7 +252,9 @@ def complete():
     'started_at': start_time,
     'completed_at': end_time,
     'score': score,
-    'strikes': strikes
+    'strikes': strikes,
+    'max_score': MAX_SCORE,
+    'max_strikes': MAX_STRIKES
   })
   sleep(10)
 
