@@ -228,7 +228,9 @@ def complete():
     'started_at': start_time,
     'completed_at': end_time,
     'score': score,
-    'strikes': strikes
+    'strikes': strikes,
+    'max_score': MAX_SCORE,
+    'max_strikes': MAX_STRIKES
   })
   sleep(5)
 

@@ -3,6 +3,7 @@ from firebase_admin import credentials
 from firebase_admin import db
 from firebase_admin import firestore
 from os import path
+from time import sleep
 
 # Constants
 
@@ -16,6 +17,6 @@ OPTS = {
 }
 
 # Main
-
+sleep(30)
 firebase_admin.initialize_app(credential=CRED, options=OPTS)
 store = firestore.client()
