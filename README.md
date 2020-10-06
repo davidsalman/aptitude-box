@@ -43,14 +43,8 @@ def generate_targets(target_index):
       targets[target_index] = 2
       
 def check_switch(switch_index):
-  if states[switch_index] == targets[switch_index]:
-    right_state()
-    activate_switch_leds(io[switch_index])
-  else:
-    if states[switch_index] != origin[switch_index] and states[switch_index] != targets[switch_index]:
-      wrong_state()
-    show_current_state(io[switch_index], states[switch_index])
-    show_target_state(io[switch_index], targets[switch_index])
+  show_current_state(io[switch_index], states[switch_index])
+  show_target_state(io[switch_index], targets[switch_index])
 
 def read_origin(switch_state, switch_index):
   global origin
@@ -76,11 +70,11 @@ def read_switch(switch_state, switch_index):
 
 def show_current_state(switch_state, state):
   if state == 0:
-    switch_state[1].on()
+    switch_state[1].blink(0.25, 0.25, 2, True)
   elif state == 1:
-    switch_state[0].on()
+    switch_state[0].blink(0.25, 0.25, 2, True)
   elif state == 2:
-    switch_state[2].on()
+    switch_state[2].blink(0.25, 0.25, 2, True)
 
 def show_target_state(switch_state, target):
   if target == 0:
@@ -94,8 +88,9 @@ def activate_switch_leds(led_switches):
   for led in led_switches:
     led.on()
 
-def right_state():
+def right_state(switch_index):
   global score
+  activate_switch_leds(io[switch_index])
   sfx_success = mixer.Sound(SOUNDS_PATH + '/sfx/success.wav')
   sfx_success.play()
   score += 1
@@ -109,7 +104,7 @@ def wrong_state():
   strikes += 1  
 
 def reset_game():
-  global io, states, targets, level, origin, score, strikes
+  global io, states, targets, level, score, strikes
   io = [[None, None, None], [None, None, None], [None, None, None], [None, None, None], [None, None, None]]
   origin = [None] * MAX_STATES
   states = [None] * MAX_STATES
@@ -207,25 +202,61 @@ def start():
 def loop():
   global level
   set_as_buttons()
-  for s in range(MAX_STATES):
+  done = [False] * 4
+  mistake = [False] * 4
+  for s in range(MAX_STATES-1):
     read_switch(io[s], s)  
     read_origin(io[s], s)
     generate_targets(s)
-  while states[0] != targets[0] or states[1] != targets[1] or states[2] != targets[2] or states[3] != targets[3] or states[4] != targets[4]:
+  while states[0] != targets[0] or states[1] != targets[1] or states[2] != targets[2] or states[3] != targets[3]:
     set_as_buttons()
-    for s in range(MAX_STATES):
+    for s in range(MAX_STATES-1):
       read_switch(io[s], s)
     set_as_leds()
     if states[0] != targets[0]:
       check_switch(0)
+      done[0] = False
+      if states[0] != origin[0]: 
+        wrong_state()
+    else:
+      if not done[0]:  
+        right_state(0)
+        done[0] = True
     if states[1] != targets[1]:
       check_switch(1)
+      done[1] = False
+      if states[1] != origin[1]:
+        wrong_state()        
+    else:
+      if not done[1]:
+        right_state(1)
+        done[1] = True 
     if states[2] != targets[2]:
       check_switch(2)
+      done[2] = False
+      if states[2] != origin[2]:
+        wrong_state()
+    else:
+      if not done[2]:
+        right_state(2)
+        done[2] = True
     if states[3] != targets[3]:
       check_switch(3)
-    if states[4] != targets[4]:
-      check_switch(4)  
+      done[3] = False
+      if states[3] != origin[3]:
+        wrong_state()
+    else:
+      if not done[3]:
+        right_state(3)
+        done[3] = True
+    #if states[4] != targets[4]:
+    #  check_switch(4)
+    #  done[4] = False
+    #else:
+    #  if not done[4]:
+    #    right_state()
+    #    done[4] =
+    sleep(1)
   level += 1
   game_ref = db.reference(GAME_DB).child(GAME_ID)
   game_ref.update({

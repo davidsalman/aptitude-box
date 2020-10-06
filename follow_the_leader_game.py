@@ -89,7 +89,7 @@ def check_left_hand_sequence():
     dialog_left_hand.play()
   while state != target:
     for i in range(level, MAX_LEVEL):
-      if io[i].value == target:
+      if io[left_hand_sequence[i]-1].value == target:
         wrong_sequence() 
     io[sequence].close()
     io[sequence] = LED(pin)
@@ -118,7 +118,7 @@ def check_right_hand_sequence():
     dialog_right_hand.play()
   while state != target:
     for i in range(level, MAX_LEVEL):
-      if io[i].value == target:
+      if io[right_hand_sequence[i]-1].value == target:
         wrong_sequence() 
     io[sequence].close()
     io[sequence] = LED(pin)

@@ -36,7 +36,7 @@ strikes = 0
 # Functions
 
 def check_pressure(current_pressure, min_pressure, max_pressure):
-  global achieved, input_received_time, score, strikes
+  global achieved, input_received_time, level, score, strikes
   tmp = None
   try:
     tmp = current_pressure.decode('utf-8').replace('\r','').replace('\n','')
@@ -52,6 +52,7 @@ def check_pressure(current_pressure, min_pressure, max_pressure):
     current_pressure = 0
   if current_pressure > min_pressure and current_pressure < max_pressure:
     if achieved % 2 != 0 :
+      level += 1
       score += 1
       sfx_good = mixer.Sound(SOUNDS_PATH + '/sfx/good.wav')
       sfx_good.play()
@@ -149,7 +150,7 @@ def start():
   setup_io()
 
 def loop():
-  global achieved, activate_instructions, mode, level
+  global achieved, activate_instructions, mode
   pressure = coms.readline()
   if mode == 'low':
     if activate_instructions:
@@ -170,13 +171,12 @@ def loop():
       activate_instructions = False
     check_pressure(pressure, 600, 700)
   if achieved > 2:
-    level += 1
     achieved = 0
     activate_instructions = True
     if mode == 'low':
       mode = 'medium'
     elif mode == 'medium':
-      mode == 'high'
+      mode = 'high'
     else:
       mode = 'low'
     game_ref = db.reference(GAME_DB).child(GAME_ID)
