@@ -50,7 +50,7 @@ def check_pressure(current_pressure, min_pressure, max_pressure):
       current_pressure = 0
   except ValueError:
     current_pressure = 0
-  if current_pressure > min_pressure and current_pressure < max_pressure and datetime.utcnow().timestamp() > input_received_time + 5000:
+  if current_pressure > min_pressure and current_pressure < max_pressure:
     if achieved % 2 != 0 :
       score += 1
       sfx_good = mixer.Sound(SOUNDS_PATH + '/sfx/good.wav')
