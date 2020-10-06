@@ -57,6 +57,7 @@ def check_pressure(current_pressure, min_pressure, max_pressure):
       sfx_good.play()
       dialog_target_achieved = mixer.Sound(SOUNDS_PATH + '/dialog/target_achieved.wav')
       dialog_target_achieved.play()
+      sleep(4)
     achieved += 1
     input_received_time = datetime.utcnow().timestamp()
   elif current_pressure > max_pressure:
@@ -65,6 +66,7 @@ def check_pressure(current_pressure, min_pressure, max_pressure):
     sfx_bad.play()
     dialog_too_much_pressure = mixer.Sound(SOUNDS_PATH + '/dialog/too_much_pressure.wav')
     dialog_too_much_pressure.play()
+    sleep(4)
 
 def reset_game():
   global achieved, activate_instructions, coms, input_received_time, level, mode, score, strikes
