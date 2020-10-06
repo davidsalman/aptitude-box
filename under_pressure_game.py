@@ -13,7 +13,7 @@ GAME_DB = 'games'
 GAME_ID = 'proto-box-under-pressure'
 GAME_NAME = 'Under Pressure Game'
 MAX_LEVEL = 3
-MAX_SCORE = MAX_LEVEL * 3
+MAX_SCORE = MAX_LEVEL
 MAX_STRIKES = 3
 ARDUINO_RESET_PIN = 18
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/under_pressure'
@@ -167,7 +167,7 @@ def loop():
       dialog_between_six_to_seven.play()
       activate_instructions = False
     check_pressure(pressure, 600, 700)
-  if achieved > 5:
+  if achieved > 2:
     level += 1
     achieved = 0
     activate_instructions = True
