@@ -1,4 +1,3 @@
-
 from datetime import datetime
 from firebase import db, store
 from gpiozero import Button, LED
@@ -10,32 +9,32 @@ from time import sleep
 # Constants
 
 GAME_DB = 'games'
-GAME_ID = 'proto-box-push-pull-game'
+GAME_ID = 'proto-box-push-pull'
 GAME_NAME = 'Push Pull Game'
 MAX_LEVEL = 5
-MAX_STATES = 5
-MAX_SCORE = MAX_LEVEL * MAX_STATES
+MAX_SCORE = MAX_LEVEL * 5
 MAX_STRIKES = 3
-NUM_IO = 15
 PINS = [[4, 17, 27], [22, 10, 9], [11, 0, 5], [6, 13, 19], [14, 15, 18]]
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/push_pull'
-START_PIN = 26
-START_LED = 40
+START_BUTTON = 26
+START_LED = 25
 
 # Variables
 
 io = [[None, None, None], [None, None, None], [None, None, None], [None, None, None], [None, None, None]]
-origin = [None] * MAX_STATES
-states = [None] * MAX_STATES
-targets = [None] * MAX_STATES
+origin = [None] * MAX_LEVEL
+states = [None] * MAX_LEVEL
+targets = [None] * MAX_LEVEL
 level = 1
 score = 0
 strikes = 0
 
+# Functions
+
 def generate_targets(target_index):
-  if states[target_index] == 0 or states[target_index] == 2:
+  if origin[target_index] == 0 or origin[target_index] == 2:
     targets[target_index] = 1
-  elif states[target_index] == 1:
+  elif origin[target_index] == 1:
     rand_selection = randrange(2)
     if rand_selection == 0:
       targets[target_index] = 0
@@ -101,16 +100,15 @@ def wrong_state():
   strikes += 1  
 
 def reset_game():
-  global io, states, targets, level, score, strikes
-  io = [[None, None, None], [None, None, None], [None, None, None], [None, None, None], [None, None, None]]
-  states = [None] * MAX_STATES
-  targets = [None] * MAX_STATES
+  global origin, states, targets, level, score, strikes
+  origin = [None] * MAX_LEVEL
+  states = [None] * MAX_LEVEL
+  targets = [None] * MAX_LEVEL
   level = 1
   score = 0
   strikes = 0
   set_as_leds()
   reset_leds()
-  set_as_buttons()
 
 def activate_leds():
   for i in io:
@@ -124,20 +122,20 @@ def reset_leds():
 
 def set_as_leds():
   global io
-  for o in range(MAX_STATES):
-    for j in range(3):
+  for o in range(len(io)):
+    for j in range(len(o)):
       if io[o][j] is not None:
         io[o][j].close()
       io[o][j] = LED(PINS[o][j])
 
 def set_as_buttons():
   global io
-  for i in range(MAX_STATES):
-    for j in range(3):
+  for i in range(len(io)):
+    for j in range(len(i)):
       if io[i][j] is not None:
         io[i][j].close()
-      io[i][j] = LED(PINS[i][j])
-    
+      io[i][j] = Button(PINS[i][j])
+
 def reset_io():
   for i in io:
     for o in i:
@@ -185,26 +183,25 @@ def start():
   dialog_start.play()
   start_led = LED(START_LED)
   start_led.blink(0.5, 0.5, None, True)
-  start_button = Button(START_PIN)
+  start_button = Button(START_BUTTON)
   start_button.wait_for_press()
   start_led.close()
+  start_button.close()
   dialog_instructions = mixer.Sound(SOUNDS_PATH + '/dialog/instructions.wav')
   dialog_instructions.play()
   game_ref.update({
     'status': 'Playing',
     'started_at': datetime.utcnow().timestamp()
   })
-  sleep(30)
+  sleep(25)
 
 def loop():
   global level
-  for s in range(MAX_STATES):
-    read_switch(io[s], s)
+  for s in range(MAX_LEVEL):
     read_origin(io[s], s)
-  for t in range(MAX_STATES):
-    generate_targets(t)
+    generate_targets(s)
   while states[0] != targets[0] or states[1] != targets[1] or states[2] != targets[2] or states[3] != targets[3] or states[4] != targets[4]:
-    for s in range(MAX_STATES):
+    for s in range(MAX_LEVEL):
       read_switch(io[s], s)
       set_as_leds()
       reset_leds()
@@ -212,7 +209,7 @@ def loop():
         activate_switch_leds(io[s])
         right_state()
       else:
-        if states[s] != origin[s] or states[s] != targets[s]:
+        if states[s] != origin[s] and states[s] != targets[s]:
           wrong_state()
         show_current_state(io[s], states[s])
         show_target_state(io[s], targets[s])

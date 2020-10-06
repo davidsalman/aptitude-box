@@ -17,6 +17,8 @@ if box_ref.get() == None:
     'game-collection': {
       'face-one': BOX_ID + '-simon-says',
       'face-two': BOX_ID + '-follow-the-leader',
-      'face-three': BOX_ID + '-under-pressure'
+      'face-three': BOX_ID + '-pull-push',
+      'face-four': BOX_ID + '-under-pressure',
+      'face-five': BOX_ID + '-dialing-it-in'
     }
   })

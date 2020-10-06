@@ -15,10 +15,10 @@ GAME_NAME = 'Simon Says Game'
 MAX_LEVEL = 10
 MAX_SCORE = MAX_LEVEL
 MAX_STRIKES = 3
-NUM_IO = 20
 PINS = [1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/simon_says'
-START_PIN = 23
+START_BUTTON = 23
+START_LED = 24
 
 # Variables
 
@@ -36,7 +36,7 @@ velocity = 600
 def generate_sequence():
   global generated_sequence
   for l in range(MAX_LEVEL):
-    generated_sequence[l] = randrange(NUM_IO)
+    generated_sequence[l] = randrange(len(io))
 
 def play_sequence():
   for l in range(level):
@@ -51,7 +51,7 @@ def get_player_sequence():
   for l in range(level):
     level_passed = False
     while level_passed is False:
-      for i in range(NUM_IO):
+      for i in range(len(io)):
         if io[i].is_pressed:
           io[i].wait_for_release()
           player_sequence[l] = i
@@ -122,13 +122,13 @@ def reset_leds():
 def set_as_buttons():
   global io
   io.clear()
-  for i in range(NUM_IO):
+  for i in range(len(PINS)):
     io.append(Button(PINS[i]))
 
 def set_as_leds():
   global io
   io.clear()
-  for o in range(NUM_IO):
+  for o in range(len(PINS)):
     io.append(LED(PINS[o]))
 
 def reset_io():
@@ -175,8 +175,12 @@ def start():
   })
   dialog_start = mixer.Sound(SOUNDS_PATH + '/dialog/start.wav')
   dialog_start.play()
-  start_button = Button(START_PIN)
+  start_led = LED(START_LED)
+  start_led.blink(0.5, 0.5, None, True)
+  start_button = Button(START_BUTTON)
   start_button.wait_for_press()
+  start_led.close()
+  start_button.close()
   dialog_instructions = mixer.Sound(SOUNDS_PATH + '/dialog/instructions.wav')
   dialog_instructions.play()
   game_ref.update({

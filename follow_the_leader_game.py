@@ -13,10 +13,9 @@ GAME_NAME = 'Follow The Leader Game'
 MAX_LEVEL = 20
 MAX_SCORE = MAX_LEVEL * 3
 MAX_STRIKES = 3
-NUM_IO = 20
 PINS = [4, 17, 27, 22, 10, 9, 11, 0, 5, 6, 13, 19, 26, 21, 20, 16, 12, 1, 7, 8]
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/follow_the_leader'
-START_PIN = 23
+START_BUTTON = 23
 START_LED = 14
 
 # Variables
@@ -89,7 +88,7 @@ def check_left_hand_sequence():
     dialog_left_hand = mixer.Sound(SOUNDS_PATH + '/dialog/left_hand.wav')
     dialog_left_hand.play()
   while state != target:
-    for i in range(level, NUM_IO):
+    for i in range(level, MAX_LEVEL):
       if io[i].value == target:
         wrong_sequence() 
     io[sequence].close()
@@ -118,7 +117,7 @@ def check_right_hand_sequence():
     dialog_right_hand = mixer.Sound(SOUNDS_PATH + '/dialog/right_hand.wav')
     dialog_right_hand.play()
   while state != target:
-    for i in range(level, NUM_IO):
+    for i in range(level, MAX_LEVEL):
       if io[i].value == target:
         wrong_sequence() 
     io[sequence].close()
@@ -158,7 +157,6 @@ def reset_game():
   strikes = 0
   set_as_leds()
   reset_leds()
-  set_as_buttons()
 
 def activate_leds():
   for led in io:
@@ -171,13 +169,13 @@ def reset_leds():
 def set_as_buttons():
   global io
   io.clear()
-  for i in range(NUM_IO):
+  for i in range(len(PINS)):
     io.append(Button(PINS[i]))
 
 def set_as_leds():
   global io
   io.clear()
-  for o in range(NUM_IO):
+  for o in range(len(PINS)):
     io.append(LED(PINS[o]))
 
 def reset_io():
@@ -226,9 +224,10 @@ def start():
   dialog_start.play()
   start_led = LED(START_LED)
   start_led.blink(0.5, 0.5, None, True)
-  start_button = Button(START_PIN)
+  start_button = Button(START_BUTTON)
   start_button.wait_for_press()
   start_led.close()
+  start_button.close()
   dialog_instructions = mixer.Sound(SOUNDS_PATH + '/dialog/instructions.wav')
   dialog_instructions.play()
   game_ref.update({
