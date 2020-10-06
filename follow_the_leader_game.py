@@ -234,7 +234,7 @@ def start():
     'status': 'Playing',
     'started_at': datetime.utcnow().timestamp()
   })
-  sleep(30)
+  sleep(28)
 
 def loop():
   global level, mode, left_hand_sequence, right_hand_sequence
@@ -305,7 +305,7 @@ def complete():
     'max_score': MAX_SCORE,
     'max_strikes': MAX_STRIKES
   })
-  sleep(10)
+  sleep(6)
 
 def clean_up():
   global io

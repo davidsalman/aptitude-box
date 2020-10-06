@@ -253,7 +253,7 @@ def complete():
     'max_score': MAX_SCORE,
     'max_strikes': MAX_STRIKES
   })
-  sleep(10)
+  sleep(8)
 
 def clean_up():
   game_ref = db.reference(GAME_DB).child(GAME_ID)

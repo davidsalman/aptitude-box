@@ -4,7 +4,7 @@ from gpiozero import Button, LED
 import RPi.GPIO as GPIO
 from os import path
 from pygame import mixer
-from serial import Serial
+import serial
 from time import sleep
 
 # Constants
@@ -29,7 +29,7 @@ baud = 57600
 level = 1
 port = '/dev/ttyACM0'
 mode = 'low'
-serial = None
+coms = None
 score = 0
 strikes = 0
 
@@ -37,6 +37,19 @@ strikes = 0
 
 def check_pressure(current_pressure, min_pressure, max_pressure):
   global achieved, input_received_time, score, strikes
+  tmp = None
+  try:
+    tmp = current_pressure.decode('utf-8').replace('\r','').replace('\n','')
+    if tmp == '':
+      tmp = '0'
+  except UnicodeDecodeError:
+    tmp = '0'
+  try:
+    current_pressure = int(tmp)
+    if current_pressure > 999:
+      current_pressure = 0
+  except ValueError:
+    current_pressure = 0
   if current_pressure > min_pressure and current_pressure < max_pressure and datetime.utcnow().timestamp() > input_received_time + 5000:
     if achieved % 2 != 0 :
       score += 1
@@ -54,13 +67,13 @@ def check_pressure(current_pressure, min_pressure, max_pressure):
     dialog_too_much_pressure.play()
 
 def reset_game():
-  global achieved, activate_instructions, input_received_time, level, mode, serial, score, strikes
+  global achieved, activate_instructions, coms, input_received_time, level, mode, score, strikes
   achieved = 0
   activate_instructions = True
   input_received_time = 0
   level = 1
   mode = 'low'
-  serial = None
+  coms = None
   score = 0
   strikes = 0
 
@@ -71,11 +84,12 @@ def reset_arduino():
   sleep(0.1)
 
 def setup_io():
-  reset_arduino()
+  global coms
   GPIO.setmode(GPIO.BCM)
-  GPIO.setup(ARDUINO_RESET_PIN, GPIO.out, initial=1)
-  serial = Serial(port, baud)
-  sleep(1)
+  GPIO.setup(ARDUINO_RESET_PIN, GPIO.OUT, initial=1)
+  reset_arduino()
+  sleep(2)
+  coms = serial.Serial(port, baud)
 
 # Main
 
@@ -133,26 +147,26 @@ def start():
   setup_io()
 
 def loop():
-  global activate_instructions, mode, level
-  pressure = serial.readline()
+  global achieved, activate_instructions, mode, level
+  pressure = coms.readline()
   if mode == 'low':
     if activate_instructions:
       dialog_between_two_to_three = mixer.Sound(SOUNDS_PATH + '/dialog/between_200_to_300.wav')
       dialog_between_two_to_three.play()
       activate_instructions = False
-    check_pressure(pressure, 2000, 3000)
+    check_pressure(pressure, 200, 300)
   elif mode == 'medium':
     if activate_instructions:
       dialog_between_four_to_five = mixer.Sound(SOUNDS_PATH + '/dialog/between_400_to_500.wav')
       dialog_between_four_to_five.play()
       activate_instructions = False
-    check_pressure(pressure, 4000, 5000)
+    check_pressure(pressure, 400, 500)
   elif mode == 'high':
     if activate_instructions:
       dialog_between_six_to_seven = mixer.Sound(SOUNDS_PATH + '/dialog/between_600_to_700.wav')
       dialog_between_six_to_seven.play()
       activate_instructions = False
-    check_pressure(pressure, 6000, 7000)
+    check_pressure(pressure, 600, 700)
   if achieved > 5:
     level += 1
     achieved = 0
@@ -172,6 +186,8 @@ def loop():
 def complete():
   global score 
   score -= strikes
+  if score < 0:
+    score = 0
   if strikes < MAX_STRIKES:
     dialog_success = mixer.Sound(SOUNDS_PATH + '/dialog/on_success.wav')
     dialog_success.play()
@@ -201,6 +217,7 @@ def complete():
     'max_score': MAX_SCORE,
     'max_strikes': MAX_STRIKES
   })
+  coms.close()
   sleep(10)
 
 def clean_up():
