@@ -17,6 +17,5 @@ OPTS = {
 }
 
 # Main
-sleep(30)
 firebase_admin.initialize_app(credential=CRED, options=OPTS)
 store = firestore.client()
