@@ -162,7 +162,7 @@ def init():
       'completed_at': 0
     })
   sleep(2)
-  
+
 def start():
   reset_game()
   game_ref = db.reference(GAME_DB).child(GAME_ID)

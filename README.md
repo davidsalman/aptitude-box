@@ -249,13 +249,13 @@ def loop():
       if not done[3]:
         right_state(3)
         done[3] = True
-    #if states[4] != targets[4]:
-    #  check_switch(4)
-    #  done[4] = False
-    #else:
-    #  if not done[4]:
-    #    right_state()
-    #    done[4] =
+    if states[4] != targets[4]:
+      check_switch(4)
+      done[4] = False
+    else:
+      if not done[4]:
+        right_state()
+        done[4] = False
     sleep(1)
   level += 1
   game_ref = db.reference(GAME_DB).child(GAME_ID)

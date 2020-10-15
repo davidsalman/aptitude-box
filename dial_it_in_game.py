@@ -22,7 +22,8 @@ START_LED = 25
 
 # Variables
 
-activate_instructions = True
+activate_feedback = True
+last_value = 0
 coms = None
 baud = 57600
 level = 1
@@ -30,8 +31,23 @@ port = '/dev/ttyACM0'
 score = 0
 strikes = 0
 
+def read_dials():
+  value = None
+  try:
+    blob = coms.readline()
+    value = blob.decode('utf-8').replace('\r','').replace('\n','')
+    if value == '':
+      value = '0'
+    value = int(value)
+    if value > 999:
+      value = 0
+  except (UnicodeDecodeError, ValueError):
+    value = 0
+  return value
+
 def reset_game():
-  global level, score, strikes
+  global last_value, level, score, strikes
+  last_value = 0
   level = 1
   score = 0
   strikes = 0
@@ -103,32 +119,24 @@ def start():
   sleep(1)
 
 def loop():
-  global activate_instructions
-  noise = coms.readline()
-  tmp = None
-  try:
-    tmp = noise.decode('utf-8').replace('\r','').replace('\n','')
-    if tmp == '':
-      tmp = '0'
-  except UnicodeDecodeError:
-    tmp = '0'
-  try:
-    noise = int(tmp)
-    if noise > 999:
-      noise = 0
-  except ValueError:
-    noise = 0
-  if noise >= 16 and noise < 18:
-    if activate_instructions:
-      sfx_good = mixer.Sound(SOUNDS_PATH + '/sfx/good.wav')
-      sfx_good.play()
-      activate_instructions = False
-  elif noise >= 18:
-      sfx_bad = mixer.Sound(SOUNDS_PATH + '/sfx/bad.wav')
-      sfx_bad.play()
-      activate_instructions = False
+  global activate_feedback, last_value
+  dials_value = read_dials()
+  if dials_value != last_value:
+    last_value = dials_value
+    sfx_click = mixer.Sound(SOUNDS_PATH + '/sfx/click.wav')
+    sfx_click.play()
+  if dials_value >= 16 and dials_value < 18:
+    if activate_feedback:
+      sfx_locked = mixer.Sound(SOUNDS_PATH + '/sfx/locked.wav')
+      sfx_locked.play()
+      activate_feedback = False
+  elif dials_value >= 18:
+    if activate_feedback:
+      dialog_wrong_position = mixer.Sound(SOUNDS_PATH + '/dialog/wrong_position.wav')
+      dialog_wrong_position.play()
+      activate_feedback = False
   else:
-    activate_instructions = True
+    activate_feedback = True
 
 def complete():
   global score 
