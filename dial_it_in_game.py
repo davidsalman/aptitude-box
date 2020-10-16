@@ -14,7 +14,7 @@ GAME_ID = 'proto-box-dial-it-in'
 GAME_NAME = 'Dial It In Game'
 MAX_LEVEL = 1
 MAX_SCORE = MAX_LEVEL
-MAX_STRIKES = 3
+MAX_STRIKES = 5
 ARDUINO_RESET_PIN = 18
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/dial_it_in'
 START_PIN = 26
@@ -119,22 +119,27 @@ def start():
   sleep(1)
 
 def loop():
-  global activate_feedback, last_value
+  global activate_feedback, last_value, level, score, strikes
   dials_value = read_dials()
   if dials_value != last_value:
     last_value = dials_value
     sfx_click = mixer.Sound(SOUNDS_PATH + '/sfx/click.wav')
     sfx_click.play()
-  if dials_value >= 16 and dials_value < 18:
+  if dials_value == 16:
     if activate_feedback:
       sfx_locked = mixer.Sound(SOUNDS_PATH + '/sfx/locked.wav')
       sfx_locked.play()
+      dialog_right_position = mixer.Sound(SOUNDS_PATH + '/dialog/right_position.wav')
+      dialog_right_position.play()
       activate_feedback = False
+      level += 1
+      score += 3
   elif dials_value >= 18:
     if activate_feedback:
       dialog_wrong_position = mixer.Sound(SOUNDS_PATH + '/dialog/wrong_position.wav')
       dialog_wrong_position.play()
       activate_feedback = False
+      strikes += 1
   else:
     activate_feedback = True
 
