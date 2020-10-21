@@ -17,8 +17,8 @@ MAX_SCORE = MAX_LEVEL
 MAX_STRIKES = 3
 ARDUINO_RESET_PIN = 18
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/under_pressure'
-START_PIN = 26
-START_LED = 25
+START_PIN = 4
+START_LED = 14
 
 # Variables
 
@@ -35,21 +35,23 @@ strikes = 0
 
 # Functions
 
+def read_pressure():
+  value = None
+  try:
+    coms.reset_input_buffer()
+    blob = coms.readline()
+    value = blob.decode('utf-8').replace('\r','').replace('\n','')
+    if value == '':
+      value = '0'
+    value = int(value)
+    if value > 36:
+      value = 0
+  except (UnicodeDecodeError, ValueError):
+    value = 0
+  return value
+
 def check_pressure(current_pressure, min_pressure, max_pressure):
   global achieved, input_received_time, level, score, strikes
-  tmp = None
-  try:
-    tmp = current_pressure.decode('utf-8').replace('\r','').replace('\n','')
-    if tmp == '':
-      tmp = '0'
-  except UnicodeDecodeError:
-    tmp = '0'
-  try:
-    current_pressure = int(tmp)
-    if current_pressure > 999:
-      current_pressure = 0
-  except ValueError:
-    current_pressure = 0
   if current_pressure > min_pressure and current_pressure < max_pressure:
     if achieved % 2 != 0 :
       level += 1
@@ -151,7 +153,7 @@ def start():
 
 def loop():
   global achieved, activate_instructions, mode
-  pressure = coms.readline()
+  pressure = read_pressure()
   if mode == 'low':
     if activate_instructions:
       dialog_between_two_to_three = mixer.Sound(SOUNDS_PATH + '/dialog/between_200_to_300.wav')

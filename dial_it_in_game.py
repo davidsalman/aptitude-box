@@ -12,9 +12,9 @@ import serial
 GAME_DB = 'games'
 GAME_ID = 'proto-box-dial-it-in'
 GAME_NAME = 'Dial It In Game'
-MAX_LEVEL = 1
-MAX_SCORE = MAX_LEVEL
-MAX_STRIKES = 5
+MAX_LEVEL = 5
+MAX_SCORE = MAX_LEVEL * 3
+MAX_STRIKES = 3
 ARDUINO_RESET_PIN = 18
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/dial_it_in'
 START_PIN = 26
@@ -34,12 +34,13 @@ strikes = 0
 def read_dials():
   value = None
   try:
+    coms.reset_input_buffer()
     blob = coms.readline()
     value = blob.decode('utf-8').replace('\r','').replace('\n','')
     if value == '':
       value = '0'
     value = int(value)
-    if value > 999:
+    if value > 36:
       value = 0
   except (UnicodeDecodeError, ValueError):
     value = 0
@@ -120,28 +121,32 @@ def start():
 
 def loop():
   global activate_feedback, last_value, level, score, strikes
-  dials_value = read_dials()
-  if dials_value != last_value:
-    last_value = dials_value
-    sfx_click = mixer.Sound(SOUNDS_PATH + '/sfx/click.wav')
-    sfx_click.play()
-  if dials_value == 16:
-    if activate_feedback:
-      sfx_locked = mixer.Sound(SOUNDS_PATH + '/sfx/locked.wav')
-      sfx_locked.play()
-      dialog_right_position = mixer.Sound(SOUNDS_PATH + '/dialog/right_position.wav')
-      dialog_right_position.play()
-      activate_feedback = False
-      level += 1
-      score += 3
-  elif dials_value >= 18:
-    if activate_feedback:
-      dialog_wrong_position = mixer.Sound(SOUNDS_PATH + '/dialog/wrong_position.wav')
-      dialog_wrong_position.play()
-      activate_feedback = False
-      strikes += 1
-  else:
-    activate_feedback = True
+  dials_value = 0
+  while dials_value != 16:
+    dials_value = read_dials()
+    if dials_value != last_value:
+      last_value = dials_value
+      sfx_click = mixer.Sound(SOUNDS_PATH + '/sfx/click.wav')
+      sfx_click.play()
+    if dials_value == 16:
+      if activate_feedback:
+        sfx_locked = mixer.Sound(SOUNDS_PATH + '/sfx/locked.wav')
+        sfx_locked.play()
+        reset_arduino()
+        if level <= MAX_LEVEL:
+          dialog_right_position = mixer.Sound(SOUNDS_PATH + '/dialog/right_position.wav')
+          dialog_right_position.play()
+        activate_feedback = False
+        level += 1
+        score += 3
+    elif dials_value >= 18:
+      if activate_feedback:
+        dialog_wrong_position = mixer.Sound(SOUNDS_PATH + '/dialog/wrong_position.wav')
+        dialog_wrong_position.play()
+        activate_feedback = False
+        strikes += 1
+    else:
+      activate_feedback = True
 
 def complete():
   global score 

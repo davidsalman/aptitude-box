@@ -16,7 +16,7 @@ MAX_STATES = 5
 MAX_SCORE = MAX_LEVEL * MAX_STATES
 MAX_STRIKES = 3
 NUM_IO = 15
-PINS = [[4, 17, 27], [22, 10, 9], [11, 0, 5], [6, 13, 19], [14, 15, 18]]
+PINS = [[4, 17, 27], [22, 10, 9], [11, 0, 5], [6, 13, 19], [23, 24, 18]]
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/push_pull'
 START_PIN = 26
 START_LED = 25
@@ -27,6 +27,8 @@ io = [[None, None, None], [None, None, None], [None, None, None], [None, None, N
 origin = [None] * MAX_STATES
 states = [None] * MAX_STATES
 targets = [None] * MAX_STATES
+done = [False] * MAX_STATES
+mistake = [False] * MAX_STATES
 level = 1
 score = 0
 strikes = 0
@@ -44,13 +46,28 @@ def generate_targets(target_index):
       
 def check_switch(switch_index):
   if states[switch_index] == targets[switch_index]:
-    right_state()
+    right_state(switch_index)
     activate_switch_leds(io[switch_index])
   else:
     if states[switch_index] != origin[switch_index] and states[switch_index] != targets[switch_index]:
       wrong_state()
     show_current_state(io[switch_index], states[switch_index])
     show_target_state(io[switch_index], targets[switch_index])
+
+def check_state_against_target(switch_index):
+  if states[switch_index] != targets[switch_index]:
+    check_switch(switch_index)
+    done[switch_index] = False
+    if states[switch_index] != origin[switch_index]: 
+      wrong_state()
+      mistake[switch_index] = True
+    else:
+      if not mistake[switch_index]:
+        mistake[switch_index] = False
+  else:
+    if not done[switch_index]:  
+      right_state(switch_index)
+      done[switch_index] = True
 
 def read_origin(switch_state, switch_index):
   global origin
@@ -94,8 +111,9 @@ def activate_switch_leds(led_switches):
   for led in led_switches:
     led.on()
 
-def right_state():
+def right_state(switch_index):
   global score
+  activate_switch_leds(io[switch_index])
   sfx_success = mixer.Sound(SOUNDS_PATH + '/sfx/success.wav')
   sfx_success.play()
   score += 1
@@ -109,11 +127,13 @@ def wrong_state():
   strikes += 1  
 
 def reset_game():
-  global io, states, targets, level, origin, score, strikes
+  global io, done, mistake, states, targets, level, origin, score, strikes
   io = [[None, None, None], [None, None, None], [None, None, None], [None, None, None], [None, None, None]]
   origin = [None] * MAX_STATES
   states = [None] * MAX_STATES
   targets = [None] * MAX_STATES
+  done = [False] * 5
+  mistake = [False] * 5
   level = 1
   score = 0
   strikes = 0
@@ -216,16 +236,11 @@ def loop():
     for s in range(MAX_STATES):
       read_switch(io[s], s)
     set_as_leds()
-    if states[0] != targets[0]:
-      check_switch(0)
-    if states[1] != targets[1]:
-      check_switch(1)
-    if states[2] != targets[2]:
-      check_switch(2)
-    if states[3] != targets[3]:
-      check_switch(3)
-    if states[4] != targets[4]:
-      check_switch(4)  
+    check_state_against_target(0)
+    check_state_against_target(1)
+    check_state_against_target(2)
+    check_state_against_target(3)
+    check_state_against_target(4)
   level += 1
   game_ref = db.reference(GAME_DB).child(GAME_ID)
   game_ref.update({

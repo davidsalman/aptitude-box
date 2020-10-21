@@ -17,5 +17,12 @@ OPTS = {
 }
 
 # Main
-firebase_admin.initialize_app(credential=CRED, options=OPTS)
-store = firestore.client()
+initialzed = False
+while not initialzed:
+  try:
+    firebase_admin.initialize_app(credential=CRED, options=OPTS)
+    store = firestore.client()
+    initialzed = True
+  except ValueError:
+    print('Waiting for Firebase to initialize ...')
+    sleep(1)
