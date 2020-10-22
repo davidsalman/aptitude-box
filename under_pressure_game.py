@@ -44,7 +44,7 @@ def read_pressure():
     if value == '':
       value = '0'
     value = int(value)
-    if value > 36:
+    if value > 999:
       value = 0
   except (UnicodeDecodeError, ValueError):
     value = 0
@@ -52,7 +52,7 @@ def read_pressure():
 
 def check_pressure(current_pressure, min_pressure, max_pressure):
   global achieved, input_received_time, level, score, strikes
-  if current_pressure > min_pressure and current_pressure < max_pressure:
+  if current_pressure > min_pressure and current_pressure < max_pressure and int(datetime.utcnow().timestamp()) > input_received_time + 1:
     if achieved % 2 != 0 :
       level += 1
       score += 1
@@ -62,7 +62,7 @@ def check_pressure(current_pressure, min_pressure, max_pressure):
       dialog_target_achieved.play()
       sleep(4)
     achieved += 1
-    input_received_time = datetime.utcnow().timestamp()
+    input_received_time = int(datetime.utcnow().timestamp())
   elif current_pressure > max_pressure:
     strikes += 1
     sfx_bad = mixer.Sound(SOUNDS_PATH + '/sfx/bad.wav')
@@ -172,7 +172,7 @@ def loop():
       dialog_between_six_to_seven.play()
       activate_instructions = False
     check_pressure(pressure, 600, 700)
-  if achieved > 2:
+  if achieved == 2:
     achieved = 0
     activate_instructions = True
     if mode == 'low':
