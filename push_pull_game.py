@@ -91,19 +91,19 @@ def read_switch(switch_state, switch_index):
 
 def show_current_state(switch_state, state):
   if state == 0:
-    switch_state[1].on()
+    switch_state[1].blink(0.5, 0.5, 1, True)
   elif state == 1:
-    switch_state[0].on()
+    switch_state[0].blink(0.5, 0.5, 1, True)
   elif state == 2:
-    switch_state[2].on()
+    switch_state[2].blink(0.5, 0.5, 1, True)
 
 def show_target_state(switch_state, target):
   if target == 0:
-    switch_state[1].on()
+    switch_state[1].blink(0.25, 0.25, 2, True)
   elif target == 1:
-    switch_state[0].on()
+    switch_state[0].blink(0.25, 0.25, 2, True)
   elif target == 2:
-    switch_state[2].on()
+    switch_state[2].blink(0.25, 0.25, 2, True)
 
 def activate_switch_leds(led_switches):
   for led in led_switches:
@@ -241,11 +241,9 @@ def loop():
     for s in range(MAX_STATES):
       read_switch(io[s], s)
     set_as_leds()
-    check_state_against_target(0)
-    check_state_against_target(1)
-    check_state_against_target(2)
-    check_state_against_target(3)
-    check_state_against_target(4)
+    for s in range(MAX_STATES):
+      check_state_against_target(s)
+    sleep(1)
   level += 1
   game_ref = db.reference(GAME_DB).child(GAME_ID)
   game_ref.update({
