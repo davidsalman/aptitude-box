@@ -1,5 +1,6 @@
 from datetime import datetime
 from firebase import db, store
+from firebase_admin.exceptions import FirebaseError
 from gpiozero import Button, LED
 from os import path
 from pygame import mixer
@@ -46,24 +47,21 @@ def generate_targets(target_index):
       
 def check_switch(switch_index):
   if states[switch_index] == targets[switch_index]:
-    right_state(switch_index)
     activate_switch_leds(io[switch_index])
   else:
-    if states[switch_index] != origin[switch_index] and states[switch_index] != targets[switch_index]:
-      wrong_state()
     show_current_state(io[switch_index], states[switch_index])
     show_target_state(io[switch_index], targets[switch_index])
 
 def check_state_against_target(switch_index):
+  check_switch(switch_index)
   if states[switch_index] != targets[switch_index]:
-    check_switch(switch_index)
     done[switch_index] = False
     if states[switch_index] != origin[switch_index]: 
-      wrong_state()
-      mistake[switch_index] = True
-    else:
       if not mistake[switch_index]:
-        mistake[switch_index] = False
+        wrong_state()
+        mistake[switch_index] = True
+    else:
+      mistake[switch_index] = False
   else:
     if not done[switch_index]:  
       right_state(switch_index)
@@ -176,6 +174,11 @@ def reset_io():
 def init():
   mixer.init()
   game_ref = db.reference(GAME_DB).child(GAME_ID)
+  while game_ref.get() == None:
+    try:
+      game_ref = db.reference(GAME_DB).child(GAME_ID)
+    except FirebaseError:
+      print('Unable to find game database reference. trying again ...')
   if game_ref.get() == None:
     game_ref.set({
       'name': GAME_NAME,
@@ -226,6 +229,8 @@ def start():
 
 def loop():
   global level
+  done = [False] * MAX_STATES
+  mistake = [False] * MAX_STATES
   set_as_buttons()
   for s in range(MAX_STATES):
     read_switch(io[s], s)  
