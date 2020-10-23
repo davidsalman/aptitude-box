@@ -15,6 +15,7 @@ GAME_NAME = 'Dial It In Game'
 MAX_LEVEL = 5
 MAX_SCORE = MAX_LEVEL * 3
 MAX_STRIKES = 3
+PINS = [[27, 22], [23, 24], [10, 9]]
 ARDUINO_RESET_PIN = 18
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/dial_it_in'
 START_PIN = 26
@@ -24,6 +25,7 @@ START_LED = 25
 
 activate_feedback = True
 last_value = 0
+io = [[None, None], [None, None], [None, None]]
 coms = None
 baud = 57600
 level = 1
@@ -32,6 +34,15 @@ score = 0
 strikes = 0
 start_led = LED(START_LED)
 start_button = Button(START_PIN)
+
+def read_dial(dial_index):
+  done = False
+  mistake = False
+  if io[dial_index][1].value == 1:
+    done = True
+  if io[dial_index][0].value == 1:
+    mistake = True
+  return done, mistake
 
 def read_dials():
   value = None
@@ -42,11 +53,23 @@ def read_dials():
     if value == '':
       value = '0'
     value = int(value)
-    if value > 36:
+    if value > 20:
       value = 0
   except (UnicodeDecodeError, ValueError):
     value = 0
   return value
+
+def right_position():
+  global score
+  sfx_locked = mixer.Sound(SOUNDS_PATH + '/sfx/locked.wav')
+  sfx_locked.play()
+  score += 1
+
+def wrong_postion():
+  global strikes
+  sfx_unlocked = mixer.Sound(SOUNDS_PATH + '/sfx/unlocked.wav')
+  sfx_unlocked.play()
+  strikes += 1
 
 def reset_game():
   global last_value, level, score, strikes
@@ -62,12 +85,24 @@ def reset_arduino():
   sleep(0.1)
 
 def setup_io():
+  setup_serial()
+  setup_dials()
+
+def setup_serial():
   global coms
   GPIO.setmode(GPIO.BCM)
   GPIO.setup(ARDUINO_RESET_PIN, GPIO.OUT, initial=1)
   reset_arduino()
   sleep(2)
   coms = serial.Serial(port, baud)
+
+def setup_dials():
+  global io
+  for i in range(3):
+    for j in range(2):
+      if io[i][j] is not None:
+        io[i][j].close()
+      io[i][j] = Button(PINS[i][j])
 
 # Main
 
@@ -139,23 +174,25 @@ def loop():
       sfx_click.play()
     if dials_value == 16:
       if activate_feedback:
-        sfx_locked = mixer.Sound(SOUNDS_PATH + '/sfx/locked.wav')
-        sfx_locked.play()
         reset_arduino()
         if level <= MAX_LEVEL:
-          dialog_right_position = mixer.Sound(SOUNDS_PATH + '/dialog/right_position.wav')
-          dialog_right_position.play()
+          dialog_right_positions = mixer.Sound(SOUNDS_PATH + '/dialog/right_positions.wav')
+          dialog_right_positions.play()
         activate_feedback = False
         level += 1
-        score += 3
     elif dials_value >= 18:
       if activate_feedback:
-        dialog_wrong_position = mixer.Sound(SOUNDS_PATH + '/dialog/wrong_position.wav')
-        dialog_wrong_position.play()
+        dialog_wrong_positions = mixer.Sound(SOUNDS_PATH + '/dialog/wrong_positions.wav')
+        dialog_wrong_positions.play()
         activate_feedback = False
-        strikes += 1
     else:
       activate_feedback = True
+    for i in range(3):
+      done, mistake = read_dial(i)
+      if done:
+        wrong_postion()
+      if mistake:
+        right_position()
     if start_button.is_pressed:
       break
 
