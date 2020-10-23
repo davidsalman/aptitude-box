@@ -30,6 +30,8 @@ level = 1
 port = '/dev/ttyACM0'
 score = 0
 strikes = 0
+start_led = LED(START_LED)
+start_button = Button(START_PIN)
 
 def read_dials():
   value = None
@@ -67,9 +69,19 @@ def setup_io():
   sleep(2)
   coms = serial.Serial(port, baud)
 
+# Main
+
 def init():
   mixer.init()
-  game_ref = db.reference(GAME_DB).child(GAME_ID)
+  db_connection = False
+  while db_connection is False:
+    try:
+      game_ref = db.reference(GAME_DB).child(GAME_ID)
+      game_ref.get()
+      db_connection = True
+    except:
+      print('Unable to find game databse reference. Trying again in 10 seconds ...')
+      sleep(10)
   if game_ref.get() == None:
     game_ref.set({
       'name': GAME_NAME,
@@ -105,11 +117,8 @@ def start():
   })
   dialog_start = mixer.Sound(SOUNDS_PATH + '/dialog/start.wav')
   dialog_start.play()
-  start_led = LED(START_LED)
   start_led.blink(0.5, 0.5, None, True)
-  start_button = Button(START_PIN)
   start_button.wait_for_press()
-  start_led.close()
   dialog_instructions = mixer.Sound(SOUNDS_PATH + '/dialog/instructions.wav')
   dialog_instructions.play()
   game_ref.update({
@@ -147,6 +156,8 @@ def loop():
         strikes += 1
     else:
       activate_feedback = True
+    if start_button.is_pressed:
+      break
 
 def complete():
   global score 
@@ -206,6 +217,8 @@ if __name__ == '__main__':
       while level <= MAX_LEVEL and strikes < MAX_STRIKES:
         print('Score: {}, Strikes: {}'.format(score, strikes))
         loop()
+        if start_button.is_pressed:
+          break
       print('Dial It In Game completed!')
       complete()
   except KeyboardInterrupt:

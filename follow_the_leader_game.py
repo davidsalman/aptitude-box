@@ -27,6 +27,8 @@ right_hand_sequence = [17, 13, 9, 5, 1, 18, 14, 10, 6, 2, 19, 15, 11, 7, 3, 20, 
 level = 1
 score = 0
 strikes = 0
+start_led = LED(START_LED)
+start_button = Button(START_BUTTON)
 
 # Functions
 
@@ -65,6 +67,8 @@ def check_both_hands_sequence():
     io[sequence_right] = Button(pin_right)
     state_left = io[sequence_left].value
     state_right = io[sequence_right].value
+    if start_button.is_pressed:
+      break
     sleep(0.01)
   io[sequence_left].close()
   io[sequence_right].close()
@@ -97,6 +101,8 @@ def check_left_hand_sequence():
     io[sequence].close()
     io[sequence] = Button(pin)
     state = io[sequence].value
+    if start_button.is_pressed:
+      break
     sleep(0.01)
   io[sequence].close()
   io[sequence] = LED(pin)
@@ -126,6 +132,8 @@ def check_right_hand_sequence():
     io[sequence].close()
     io[sequence] = Button(pin)
     state = io[sequence].value
+    if start_button.is_pressed:
+      break
     sleep(0.01)
   io[sequence].close()
   io[sequence] = LED(pin)
@@ -186,7 +194,15 @@ def reset_io():
 
 def init():
   mixer.init()
-  game_ref = db.reference(GAME_DB).child(GAME_ID)
+  db_connection = False
+  while db_connection is False:
+    try:
+      game_ref = db.reference(GAME_DB).child(GAME_ID)
+      game_ref.get()
+      db_connection = True
+    except:
+      print('Unable to find game databse reference. Trying again in 10 seconds ...')
+      sleep(10)
   if game_ref.get() == None:
     game_ref.set({
       'name': GAME_NAME,
@@ -222,12 +238,8 @@ def start():
   })
   dialog_start = mixer.Sound(SOUNDS_PATH + '/dialog/start.wav')
   dialog_start.play()
-  start_led = LED(START_LED)
   start_led.blink(0.5, 0.5, None, True)
-  start_button = Button(START_BUTTON)
   start_button.wait_for_press()
-  start_led.close()
-  start_button.close()
   dialog_instructions = mixer.Sound(SOUNDS_PATH + '/dialog/instructions.wav')
   dialog_instructions.play()
   game_ref.update({
@@ -330,6 +342,8 @@ if __name__ == '__main__':
       while mode != 'done' and strikes < MAX_STRIKES:
         print('Score: {}, Strikes: {}'.format(score, strikes))
         loop()
+        if start_button.is_pressed:
+          break
       print('Follow The Leader Game completed!')
       complete()
   except KeyboardInterrupt:
