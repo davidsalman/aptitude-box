@@ -30,6 +30,8 @@ level = 1
 score = 0
 strikes = 0
 velocity = 600
+start_led = LED(START_LED)
+start_button = Button(START_BUTTON)
 
 # Functions
 
@@ -54,12 +56,21 @@ def get_player_sequence():
       for i in range(len(io)):
         if io[i].is_pressed:
           io[i].wait_for_release()
+          io[i].close()
+          sfx_button_pressed = mixer.Sound(SOUNDS_PATH + '/sfx/button_pressed.wav')
+          sfx_button_pressed.play()
+          io[i] = LED(PINS[i])
+          io[i].blink(0.25, 0.25, 1, False)
+          io[i].close()
+          io[i] = Button(PINS[i])
           player_sequence[l] = i
           if generated_sequence[l] == player_sequence[l]:
             level_passed = True
           else:
             wrong_sequence()
             return
+      if start_button.is_pressed:
+        break
       sleep(0.01)
   right_sequence()
 
@@ -139,7 +150,15 @@ def reset_io():
 
 def init():
   mixer.init()
-  game_ref = db.reference(GAME_DB).child(GAME_ID)
+  db_connection = False
+  while db_connection is False:
+    try:
+      game_ref = db.reference(GAME_DB).child(GAME_ID)
+      game_ref.get()
+      db_connection = True
+    except:
+      print('Unable to find game databse reference. Trying again in 10 seconds ...')
+      sleep(10)
   if game_ref.get() == None:
     game_ref.set({
       'name': GAME_NAME,
@@ -175,9 +194,7 @@ def start():
   })
   dialog_start = mixer.Sound(SOUNDS_PATH + '/dialog/start.wav')
   dialog_start.play()
-  start_led = LED(START_LED)
   start_led.blink(0.5, 0.5, None, True)
-  start_button = Button(START_BUTTON)
   start_button.wait_for_press()
   start_led.close()
   start_button.close()
@@ -260,6 +277,8 @@ if __name__ == '__main__':
       while level <= MAX_LEVEL and strikes < MAX_STRIKES:
         print('Score: {}, Strikes: {}'.format(score, strikes))
         loop()
+        if start_button.is_pressed:
+          break
       print('Simon Says Game completed!')
       complete()
   except KeyboardInterrupt:
