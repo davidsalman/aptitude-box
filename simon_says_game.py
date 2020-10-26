@@ -17,8 +17,8 @@ MAX_SCORE = MAX_LEVEL
 MAX_STRIKES = 3
 PINS = [1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/simon_says'
-START_BUTTON = 23
-START_LED = 24
+START_BUTTON = 27
+START_LED = 0
 
 # Variables
 
@@ -38,14 +38,16 @@ start_button = Button(START_BUTTON)
 def generate_sequence():
   global generated_sequence
   for l in range(MAX_LEVEL):
-    generated_sequence[l] = randrange(len(io))
+    generated_sequence[l] = PINS[randrange(len(io))]
 
 def play_sequence():
   for l in range(level):
     selected_led = generated_sequence[l]
-    io[selected_led].on()
-    sleep(velocity/1000)
-    io[selected_led].off()
+    for i in range(len(io)):
+      if io[i].pin.number == selected_led:
+        io[i].on()
+        sleep(velocity/1000)
+        io[i].off()
 
 def get_player_sequence():
   set_as_buttons()
@@ -63,7 +65,7 @@ def get_player_sequence():
           io[i].blink(0.25, 0.25, 1, False)
           io[i].close()
           io[i] = Button(PINS[i])
-          player_sequence[l] = i
+          player_sequence[l] = io[i].pin.number
           if generated_sequence[l] == player_sequence[l]:
             level_passed = True
           else:
