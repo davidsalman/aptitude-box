@@ -192,12 +192,16 @@ def start():
     'started_at': 0,
     'completed_at': 0
   })
-  dialog_start = mixer.Sound(SOUNDS_PATH + '/dialog/start.wav')
-  dialog_start.play()
-  start_led.blink(0.5, 0.5, None, True)
-  start_button.wait_for_press()
-  start_led.close()
-  start_button.close()
+  dialog_start_counter = 0
+  while not start_button.is_pressed:
+    if dialog_start_counter == 0:
+      dialog_start = mixer.Sound(SOUNDS_PATH + '/dialog/start.wav')
+      dialog_start.play()
+    start_led.blink(0.5, 0.5, 1, False)
+    dialog_start_counter += 1
+    if dialog_start_counter > 30:
+      dialog_start_counter = 0
+  start_led.off()
   dialog_instructions = mixer.Sound(SOUNDS_PATH + '/dialog/instructions.wav')
   dialog_instructions.play()
   game_ref.update({

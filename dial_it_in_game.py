@@ -12,18 +12,24 @@ import serial
 GAME_DB = 'games'
 GAME_ID = 'proto-box-dial-it-in'
 GAME_NAME = 'Dial It In Game'
-MAX_LEVEL = 5
+MAX_LEVEL = 3
 MAX_SCORE = MAX_LEVEL * 3
 MAX_STRIKES = 3
 PINS = [[27, 22], [23, 24], [10, 9]]
 ARDUINO_RESET_PIN = 18
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/dial_it_in'
-START_PIN = 26
-START_LED = 25
+START_PIN = 14
+START_LED = 4
 
 # Variables
 
 activate_feedback = True
+activate_dial_1_feedback_success = True
+activate_dial_2_feedback_success = True
+activate_dial_3_feedback_success = True
+activate_dial_1_feedback_failure = True
+activate_dial_2_feedback_failure = True
+activate_dial_3_feedback_failure = True
 last_value = 0
 io = [[None, None], [None, None], [None, None]]
 coms = None
@@ -35,14 +41,51 @@ strikes = 0
 start_led = LED(START_LED)
 start_button = Button(START_PIN)
 
+# Functions
+
 def read_dial(dial_index):
   done = False
   mistake = False
-  if io[dial_index][1].value == 1:
+  if io[dial_index][1].value == 0:
     done = True
-  if io[dial_index][0].value == 1:
+  if io[dial_index][0].value == 0:
     mistake = True
   return done, mistake
+
+def check_dial(dial_index, done, mistake):
+  global activate_dial_1_feedback_success, activate_dial_2_feedback_success, activate_dial_3_feedback_success, activate_dial_1_feedback_failure, activate_dial_2_feedback_failure, activate_dial_3_feedback_failure
+  if done:
+    if activate_dial_1_feedback_success and dial_index == 0 or activate_dial_2_feedback_success and dial_index == 1 or activate_dial_3_feedback_success and dial_index == 2:
+      right_position()
+    if dial_index == 0:
+      activate_dial_1_feedback_success = False
+    elif dial_index == 1:
+      activate_dial_2_feedback_success = False
+    else:
+      activate_dial_3_feedback_success = False 
+  if mistake:
+    if activate_dial_1_feedback_failure and dial_index == 0 or activate_dial_2_feedback_failure and dial_index == 1 or activate_dial_3_feedback_failure and dial_index == 2:  
+      wrong_position()
+    if dial_index == 0:
+      activate_dial_1_feedback_failure = False
+    elif dial_index == 1:
+      activate_dial_2_feedback_failure = False
+    else:
+      activate_dial_3_feedback_failure = False 
+  if not done:
+    if dial_index == 0:
+      activate_dial_1_feedback_success = True
+    elif dial_index == 1:
+      activate_dial_2_feedback_success = True
+    else:
+      activate_dial_3_feedback_success = True
+  if not mistake:
+    if dial_index == 0:
+      activate_dial_1_feeback_failure = True
+    elif dial_index == 1:
+      activate_dial_2_feedback_failure = True
+    else:
+      activate_dial_3_feedback_failure = True
 
 def read_dials():
   value = None
@@ -65,14 +108,21 @@ def right_position():
   sfx_locked.play()
   score += 1
 
-def wrong_postion():
+def wrong_position():
   global strikes
   sfx_unlocked = mixer.Sound(SOUNDS_PATH + '/sfx/unlocked.wav')
   sfx_unlocked.play()
   strikes += 1
 
 def reset_game():
-  global last_value, level, score, strikes
+  global activate_feedback, activate_dial_1_feedback_success, activate_dial_2_feedback_success, activate_dial_3_feedback_success, activate_dial_1_feedback_failure, activate_dial_2_feedback_failure, activate_dial_3_feedback_failure, last_value, level, score, strikes
+  activate_feedback = True
+  activate_dial_1_feedback_success = True
+  activate_dial_2_feedback_success = True
+  activate_dial_3_feedback_success = True
+  activate_dial_1_feedback_failure = True
+  activate_dial_2_feedback_failure = True
+  activate_dial_3_feedback_failure = True
   last_value = 0
   level = 1
   score = 0
@@ -93,7 +143,7 @@ def setup_serial():
   GPIO.setmode(GPIO.BCM)
   GPIO.setup(ARDUINO_RESET_PIN, GPIO.OUT, initial=1)
   reset_arduino()
-  sleep(2)
+  sleep(5)
   coms = serial.Serial(port, baud)
 
 def setup_dials():
@@ -150,10 +200,16 @@ def start():
     'started_at': 0,
     'completed_at': 0
   })
-  dialog_start = mixer.Sound(SOUNDS_PATH + '/dialog/start.wav')
-  dialog_start.play()
-  start_led.blink(0.5, 0.5, None, True)
-  start_button.wait_for_press()
+  dialog_start_counter = 0
+  while not start_button.is_pressed:
+    if dialog_start_counter == 0:
+      dialog_start = mixer.Sound(SOUNDS_PATH + '/dialog/start.wav')
+      dialog_start.play()
+    start_led.blink(0.5, 0.5, 1, False)
+    dialog_start_counter += 1
+    if dialog_start_counter > 30:
+      dialog_start_counter = 0
+  start_led.off()
   dialog_instructions = mixer.Sound(SOUNDS_PATH + '/dialog/instructions.wav')
   dialog_instructions.play()
   game_ref.update({
@@ -161,12 +217,12 @@ def start():
     'started_at': datetime.utcnow().timestamp()
   })
   setup_io()
-  sleep(1)
+  sleep(25)
 
 def loop():
   global activate_feedback, last_value, level, score, strikes
   dials_value = 0
-  while dials_value != 16:
+  while dials_value != 16 and level <= MAX_LEVEL and strikes < MAX_STRIKES:
     dials_value = read_dials()
     if dials_value != last_value:
       last_value = dials_value
@@ -175,11 +231,12 @@ def loop():
     if dials_value == 16:
       if activate_feedback:
         reset_arduino()
+        sleep(2)
+        level += 1
         if level <= MAX_LEVEL:
           dialog_right_positions = mixer.Sound(SOUNDS_PATH + '/dialog/right_positions.wav')
           dialog_right_positions.play()
         activate_feedback = False
-        level += 1
     elif dials_value >= 18:
       if activate_feedback:
         dialog_wrong_positions = mixer.Sound(SOUNDS_PATH + '/dialog/wrong_positions.wav')
@@ -189,15 +246,14 @@ def loop():
       activate_feedback = True
     for i in range(3):
       done, mistake = read_dial(i)
-      if done:
-        wrong_postion()
-      if mistake:
-        right_position()
+      check_dial(i, done, mistake)
     if start_button.is_pressed:
       break
+    sleep(1)
 
 def complete():
-  global score 
+  global score
+  sleep(2)
   score -= strikes
   if score < 0:
     score = 0
@@ -230,8 +286,8 @@ def complete():
     'max_score': MAX_SCORE,
     'max_strikes': MAX_STRIKES
   })
-  coms.close()
   sleep(10)
+  coms.close()
 
 def clean_up():
   game_ref = db.reference(GAME_DB).child(GAME_ID)
