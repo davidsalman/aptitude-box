@@ -18,7 +18,7 @@ MAX_STRIKES = 3
 PINS = [[27, 22], [23, 24], [10, 9]]
 ARDUINO_RESET_PIN = 18
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/dial_it_in'
-START_PIN = 14
+START_BUTTON = 14
 START_LED = 4
 
 # Variables
@@ -39,7 +39,7 @@ port = '/dev/ttyACM0'
 score = 0
 strikes = 0
 start_led = LED(START_LED)
-start_button = Button(START_PIN)
+start_button = Button(START_BUTTON)
 
 # Functions
 

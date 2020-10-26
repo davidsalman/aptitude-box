@@ -19,8 +19,8 @@ MAX_STRIKES = 3
 NUM_IO = 15
 PINS = [[4, 17, 27], [22, 10, 9], [11, 0, 5], [6, 13, 19], [23, 24, 18]]
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/push_pull'
-START_PIN = 26
-START_LED = 25
+START_BUTTON = 26
+START_LED = 21
 
 # Variables
 
@@ -34,7 +34,7 @@ level = 1
 score = 0
 strikes = 0
 start_led = LED(START_LED)
-start_button = Button(START_PIN)
+start_button = Button(START_BUTTON)
 
 def generate_targets(target_index):
   global targets  

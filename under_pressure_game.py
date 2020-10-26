@@ -17,7 +17,7 @@ MAX_SCORE = MAX_LEVEL
 MAX_STRIKES = 3
 ARDUINO_RESET_PIN = 18
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/under_pressure'
-START_PIN = 4
+START_BUTTON = 4
 START_LED = 14
 
 # Variables
@@ -33,7 +33,7 @@ coms = None
 score = 0
 strikes = 0
 start_led = LED(START_LED)
-start_button = Button(START_PIN)
+start_button = Button(START_BUTTON)
 
 # Functions
 
