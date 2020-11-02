@@ -10,7 +10,7 @@ from time import sleep
 # Constants
 
 GAME_DB = 'games'
-GAME_ID = 'proto-box-push-pull-game'
+GAME_ID = 'proto-box-push-pull'
 GAME_NAME = 'Push Pull Game'
 MAX_LEVEL = 5
 MAX_STATES = 5
@@ -324,5 +324,7 @@ if __name__ == '__main__':
       complete()
   except KeyboardInterrupt:
     print('Keyboard interrupt detected! Closing ...')
+  except:
+    print('Error detected! Closing ...')
   finally:
     clean_up()

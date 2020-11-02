@@ -263,5 +263,7 @@ if __name__ == '__main__':
       complete()
   except KeyboardInterrupt:
     print('Keyboard interrupt detected! Closing ...')
+  except:
+    print('Error detected! Closing ...')
   finally:
     clean_up()
