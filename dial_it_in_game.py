@@ -81,7 +81,7 @@ def check_dial(dial_index, done, mistake):
       activate_dial_3_feedback_success = True
   if not mistake:
     if dial_index == 0:
-      activate_dial_1_feeback_failure = True
+      activate_dial_1_feedback_failure = True
     elif dial_index == 1:
       activate_dial_2_feedback_failure = True
     else:
