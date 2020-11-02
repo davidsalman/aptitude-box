@@ -19,6 +19,7 @@ MAX_STRIKES = 3
 NUM_IO = 15
 PINS = [[4, 17, 27], [22, 10, 9], [11, 0, 5], [6, 13, 19], [23, 24, 18]]
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/push_pull'
+ACTIVATE_GAME_BUTTON = 16
 START_BUTTON = 26
 START_LED = 21
 
@@ -33,6 +34,7 @@ mistake = [False] * MAX_STATES
 level = 1
 score = 0
 strikes = 0
+activate_game_button = Button(ACTIVATE_GAME_BUTTON)
 start_led = LED(START_LED)
 start_button = Button(START_BUTTON)
 
@@ -313,6 +315,9 @@ if __name__ == '__main__':
     init()
     print('Push Pull Game is now active!') 
     while True:
+      if not activate_game_button.is_pressed:
+        sleep(1)
+        continue
       print('Press the start button to play ...')
       start()
       while level <= MAX_LEVEL and strikes < MAX_STRIKES:

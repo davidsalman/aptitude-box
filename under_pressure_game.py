@@ -17,6 +17,7 @@ MAX_SCORE = MAX_LEVEL
 MAX_STRIKES = 3
 ARDUINO_RESET_PIN = 18
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/under_pressure'
+ACTIVATE_GAME_BUTTON = 15
 START_BUTTON = 4
 START_LED = 14
 
@@ -32,6 +33,7 @@ mode = 'low'
 coms = None
 score = 0
 strikes = 0
+activate_game_button = Button(ACTIVATE_GAME_BUTTON)
 start_led = LED(START_LED)
 start_button = Button(START_BUTTON)
 
@@ -252,6 +254,9 @@ if __name__ == '__main__':
     init()
     print('Under Pressure Game is now active!')
     while True:
+      if not activate_game_button.is_pressed:
+        sleep(1)
+        continue
       print('Press the start button to play ...')
       start()
       while level <= MAX_LEVEL and strikes < MAX_STRIKES:

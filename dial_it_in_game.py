@@ -18,6 +18,7 @@ MAX_STRIKES = 3
 PINS = [[27, 22], [23, 24], [10, 9]]
 ARDUINO_RESET_PIN = 18
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/dial_it_in'
+ACTIVATE_GAME_BUTTON = 15
 START_BUTTON = 14
 START_LED = 4
 
@@ -38,6 +39,7 @@ level = 1
 port = '/dev/ttyACM0'
 score = 0
 strikes = 0
+activate_game_button = Button(ACTIVATE_GAME_BUTTON)
 start_led = LED(START_LED)
 start_button = Button(START_BUTTON)
 
@@ -81,7 +83,7 @@ def check_dial(dial_index, done, mistake):
       activate_dial_3_feedback_success = True
   if not mistake:
     if dial_index == 0:
-      activate_dial_1_feeback_failure = True
+      activate_dial_1_feedback_failure = True
     elif dial_index == 1:
       activate_dial_2_feedback_failure = True
     else:
@@ -305,6 +307,9 @@ if __name__ == '__main__':
     init()
     print('Dial It In Game is now active!')
     while True:
+      if not activate_game_button.is_pressed:
+        sleep(1)
+        continue
       print('Press the start button to play ...')
       start()
       while level <= MAX_LEVEL and strikes < MAX_STRIKES:

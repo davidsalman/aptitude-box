@@ -17,6 +17,7 @@ MAX_SCORE = MAX_LEVEL
 MAX_STRIKES = 3
 PINS = [1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/simon_says'
+ACTIVATE_GAME_BUTTON = 26
 START_BUTTON = 27
 START_LED = 0
 
@@ -30,6 +31,7 @@ level = 1
 score = 0
 strikes = 0
 velocity = 600
+activate_game_button = Button(ACTIVATE_GAME_BUTTON)
 start_led = LED(START_LED)
 start_button = Button(START_BUTTON)
 
@@ -278,6 +280,9 @@ if __name__ == '__main__':
     init()
     print('Simon Says Game is now active!') 
     while True:
+      if not activate_game_button.is_pressed:
+        sleep(1)
+        continue
       print('Press the start button to play ...')
       start()
       while level <= MAX_LEVEL and strikes < MAX_STRIKES:

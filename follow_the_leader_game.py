@@ -15,6 +15,7 @@ MAX_SCORE = MAX_LEVEL * 3
 MAX_STRIKES = 3
 PINS = [4, 17, 27, 22, 10, 9, 11, 0, 5, 6, 13, 19, 26, 21, 20, 16, 12, 1, 7, 8]
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/follow_the_leader'
+ACTIVATE_GAME_BUTTON = 24
 START_BUTTON = 23
 START_LED = 14
 
@@ -27,6 +28,7 @@ right_hand_sequence = [17, 13, 9, 5, 1, 18, 14, 10, 6, 2, 19, 15, 11, 7, 3, 20, 
 level = 1
 score = 0
 strikes = 0
+activate_game_button = Button(ACTIVATE_GAME_BUTTON)
 start_led = LED(START_LED)
 start_button = Button(START_BUTTON)
 
@@ -343,6 +345,9 @@ if __name__ == '__main__':
     init()
     print('Follow The Leader Game is now active!')
     while True:
+      if not activate_game_button.is_pressed:
+        sleep(1)
+        continue
       print('Press the start button to play ...')
       start()
       while mode != 'done' and strikes < MAX_STRIKES:
