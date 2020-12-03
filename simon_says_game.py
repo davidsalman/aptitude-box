@@ -6,6 +6,7 @@ from os import path
 from pygame import mixer
 from random import randrange
 from time import sleep
+from box_setup import BOX_ID
 
 # Constants
 
@@ -163,6 +164,7 @@ def init():
       sleep(10)
   if game_ref.get() == None:
     game_ref.set({
+      'box_id': BOX_ID,
       'name': GAME_NAME,
       'alive': True,
       'status': 'Initializing',

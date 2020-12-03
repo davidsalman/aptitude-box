@@ -6,6 +6,7 @@ from os import path
 from pygame import mixer
 from random import randrange
 from time import sleep
+from box_setup import BOX_ID
 
 # Constants
 
@@ -186,6 +187,7 @@ def init():
       sleep(10)
   if game_ref.get() == None:
     game_ref.set({
+      'box_id': BOX_ID,
       'name': GAME_NAME,
       'alive': True,
       'status': 'Initializing',
@@ -233,7 +235,7 @@ def start():
     'status': 'Playing',
     'started_at': datetime.utcnow().timestamp()
   })
-  sleep(1)
+  sleep(32)
 
 def loop():
   global done, mistake, level
@@ -253,7 +255,7 @@ def loop():
       check_state_against_target(s)
     if start_button.is_pressed:
       break
-    sleep(1)
+    sleep(1.1)
   level += 1
   game_ref = db.reference(GAME_DB).child(GAME_ID)
   game_ref.update({
@@ -294,7 +296,7 @@ def complete():
     'max_score': MAX_SCORE,
     'max_strikes': MAX_STRIKES
   })
-  sleep(10)
+  sleep(8)
 
 def clean_up():
   game_ref = db.reference(GAME_DB).child(GAME_ID)

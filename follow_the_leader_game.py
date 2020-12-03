@@ -4,6 +4,7 @@ from gpiozero import Button, LED
 from os import path
 from pygame import mixer
 from time import sleep
+from box_setup import BOX_ID
 
 # Constants
 
@@ -13,7 +14,7 @@ GAME_NAME = 'Follow The Leader Game'
 MAX_LEVEL = 20
 MAX_SCORE = MAX_LEVEL * 3
 MAX_STRIKES = 3
-PINS = [4, 17, 27, 22, 10, 9, 11, 0, 5, 6, 13, 19, 26, 21, 20, 16, 12, 1, 7, 8]
+PINS = [4, 17, 27, 22, 10, 9, 25, 0, 5, 6, 13, 19, 26, 21, 20, 16, 12, 1, 7, 8]
 SOUNDS_PATH = path.dirname(path.abspath(__file__)) + '/sounds/follow_the_leader'
 START_BUTTON = 23
 START_LED = 14
@@ -60,7 +61,7 @@ def check_both_hands_sequence():
     io[sequence_right] = LED(pin_right)
     io[sequence_left].blink(0.5, 0.5, 1, True)
     io[sequence_right].blink(0.5, 0.5, 1, True)
-    sleep(1.0)
+    sleep(1.1)
     io[sequence_left].close()
     io[sequence_right].close()
     io[sequence_left] = Button(pin_left)
@@ -205,6 +206,7 @@ def init():
       sleep(10)
   if game_ref.get() == None:
     game_ref.set({
+      'box_id': BOX_ID,
       'name': GAME_NAME,
       'alive': True,
       'status': 'Initializing',
@@ -252,7 +254,7 @@ def start():
     'status': 'Playing',
     'started_at': datetime.utcnow().timestamp()
   })
-  sleep(28)
+  sleep(36)
 
 def loop():
   global level, mode, left_hand_sequence, right_hand_sequence

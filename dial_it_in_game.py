@@ -4,6 +4,7 @@ from gpiozero import Button, LED
 from os import path
 from pygame import mixer
 from time import sleep
+from box_setup import BOX_ID
 import RPi.GPIO as GPIO
 import serial
 
@@ -13,7 +14,7 @@ GAME_DB = 'games'
 GAME_ID = 'proto-box-dial-it-in'
 GAME_NAME = 'Dial It In Game'
 MAX_LEVEL = 3
-MAX_SCORE = MAX_LEVEL * 3
+MAX_SCORE = (MAX_LEVEL * 3) + 1
 MAX_STRIKES = 3
 PINS = [[27, 22], [23, 24], [10, 9]]
 ARDUINO_RESET_PIN = 18
@@ -169,6 +170,7 @@ def init():
       sleep(10)
   if game_ref.get() == None:
     game_ref.set({
+      'box_id': BOX_ID,
       'name': GAME_NAME,
       'alive': True,
       'status': 'Initializing',
@@ -217,7 +219,7 @@ def start():
     'started_at': datetime.utcnow().timestamp()
   })
   setup_io()
-  sleep(25)
+  sleep(34)
 
 def loop():
   global activate_feedback, last_value, level, score, strikes
