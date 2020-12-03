@@ -13,12 +13,5 @@ if box_ref.get() == None:
   box_ref.set({
     'name': BOX_NAME,
     'company': 'PaceFactory Inc.',
-    'location': 'Oakville ON',
-    'game-collection': {
-      'face-one': BOX_ID + '-simon-says',
-      'face-two': BOX_ID + '-follow-the-leader',
-      'face-three': BOX_ID + '-push-pull',
-      'face-four': BOX_ID + '-under-pressure',
-      'face-five': BOX_ID + '-dial-it-in'
-    }
+    'location': 'Oakville ON'
   })
