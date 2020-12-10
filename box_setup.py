@@ -13,5 +13,6 @@ if box_ref.get() == None:
   box_ref.set({
     'name': BOX_NAME,
     'company': 'PaceFactory Inc.',
-    'location': 'Oakville ON'
+    'location': 'Oakville ON',
+    'taken': False
   })
