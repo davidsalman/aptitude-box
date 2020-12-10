@@ -3,3 +3,6 @@
 
 # Google Service Account
 configs/aptitude-cloud-firebase-adminsdk-pv06k-64624c438a.json
+
+# Pycache Files
+__pycache__/
